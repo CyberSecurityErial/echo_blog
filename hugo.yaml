@@ -1,0 +1,41 @@
+baseURL: "https://echo_ctwang.github.io/"
+languageCode: "zh-cn"
+title: "我的技术博客"
+theme: ["PaperMod"]
+
+caches:
+  images:
+    dir: :cacheDir/images
+
+params:
+  env: production
+  defaultTheme: auto
+  ShowReadingTime: true
+  ShowCodeCopyButtons: true
+  ShowToc: true
+  ShowBreadCrumbs: true
+  ShowPostNavLinks: true
+
+taxonomies:
+  category: categories
+  tag: tags
+  series: series
+
+menu:
+  main:
+    - identifier: posts
+      name: 文章
+      url: /posts/
+      weight: 10
+    - identifier: tags
+      name: 标签
+      url: /tags/
+      weight: 20
+    - identifier: series
+      name: 系列
+      url: /series/
+      weight: 25
+    - identifier: archives
+      name: 归档
+      url: /archives/
+      weight: 30
