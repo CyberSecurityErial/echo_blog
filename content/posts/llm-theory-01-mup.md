@@ -261,6 +261,250 @@ $$
 中间层的in和out维度相同，保证不会出现前传反传的兼容问题，这样问题就可以暂时简化了，只需要考虑最外部的indim和最外部的outdim（这两个是由外部决定的，不能随便改）和中间层维度dim。
 中间层根据dim自适应调整的策略我们已经推导了，剩下的问题就只是处理最开始和最后一层。而对他们特殊处理的方式也不难，只需要想办法在RMS=theta 1的时候凑出来学习率关于dim的表达式即可。
 
+## 不同层的RMS
+
+其实上一节已经把主要问题解决干净了，最后剩下的就是一些实际处理上的细节。原文把神经网络权重划分成三类：in，out，hidden。in和out之所以单独拿出来，是因为它们有一个维度是尺度无关的，所以RMS算出来和中间层不一样。
+因此本文只是把RMS计算的不同展开写一下。
+
+RMS 和 Frobenius 范数的关系：
+
+$$
+\mathrm{RMS}(\boldsymbol{A})=\sqrt{\frac{1}{mn}\sum_{i,j}A_{ij}^2}
+$$
+
+$$
+\|\boldsymbol{A}\|_F^2=\sum_{i,j}A_{ij}^2
+$$
+
+$$
+\|\boldsymbol{A}\|_F^2=mn\cdot \mathrm{RMS}(\boldsymbol{A})^2
+$$
+
+输出层梯度：
+
+$$
+\boldsymbol{Z}=\boldsymbol{Y}_{out}\boldsymbol{W}_{out}
+$$
+
+$$
+\frac{\partial \mathcal{L}}{\partial \boldsymbol{W}_{out}}=\boldsymbol{Y}_{out}^{\top}\frac{\partial \mathcal{L}}{\partial \boldsymbol{Z}}
+$$
+
+$$
+\mathrm{RMS}(\boldsymbol{Y}_{out})=\Theta(1)
+$$
+
+$$
+\mathrm{RMS}\left(\frac{\partial \mathcal{L}}{\partial \boldsymbol{Z}}\right)=\Theta(1)
+$$
+
+$$
+\mathrm{RMS}\left(\frac{\partial \mathcal{L}}{\partial \boldsymbol{W}_{out}}\right)=\Theta(1)
+$$
+
+$$
+\boldsymbol{W}_{out}\in\mathbb{R}^{d\times d_{out}}
+$$
+
+$$
+\left\|\frac{\partial \mathcal{L}}{\partial \boldsymbol{W}_{out}}\right\|_F^2=d\cdot d_{out}\cdot\Theta(1)^2
+$$
+
+$$
+d_{out}=\Theta(1)
+$$
+
+$$
+\left\|\frac{\partial \mathcal{L}}{\partial \boldsymbol{W}_{out}}\right\|_F^2=\Theta(d)
+$$
+
+$$
+\Delta \mathcal{L}_{out}\approx-\eta_{out}\left\|\frac{\partial \mathcal{L}}{\partial \boldsymbol{W}_{out}}\right\|_F^2
+$$
+
+$$
+\Delta \mathcal{L}_{out}=\Theta(1)\Rightarrow \eta_{out}\Theta(d)=\Theta(1)
+$$
+
+$$
+\eta_{out}\propto\frac{1}{d}
+$$
+
+中间层梯度：
+
+$$
+\frac{\partial \mathcal{L}}{\partial \boldsymbol{Y}_{out}}=\frac{\partial \mathcal{L}}{\partial \boldsymbol{Z}}\boldsymbol{W}_{out}^{\top}
+$$
+
+$$
+\mathrm{Var}(\boldsymbol{W}_{out})\propto\frac{1}{d^2}
+$$
+
+$$
+\mathrm{RMS}(\boldsymbol{W}_{out})=\Theta\left(\frac{1}{d}\right)
+$$
+
+$$
+\mathrm{RMS}\left(\frac{\partial \mathcal{L}}{\partial \boldsymbol{Z}}\right)=\Theta(1)
+$$
+
+$$
+\mathrm{RMS}\left(\frac{\partial \mathcal{L}}{\partial \boldsymbol{Y}_{out}}\right)=\Theta\left(\frac{1}{d}\right)
+$$
+
+$$
+\frac{\partial \mathcal{L}}{\partial \boldsymbol{W}_k}=\frac{\partial \boldsymbol{Y}_{out}}{\partial \boldsymbol{W}_k}\cdot\frac{\partial \mathcal{L}}{\partial \boldsymbol{Y}_{out}}
+$$
+
+$$
+\mathrm{RMS}\left(\frac{\partial \boldsymbol{Y}_{out}}{\partial \boldsymbol{W}_k}\right)=\Theta(1)
+$$
+
+$$
+\mathrm{RMS}\left(\frac{\partial \mathcal{L}}{\partial \boldsymbol{W}_k}\right)=\Theta(1)\cdot\Theta\left(\frac{1}{d}\right)
+$$
+
+$$
+\mathrm{RMS}\left(\frac{\partial \mathcal{L}}{\partial \boldsymbol{W}_k}\right)=\Theta\left(\frac{1}{d}\right)
+$$
+
+$$
+\boldsymbol{W}_k\in\mathbb{R}^{d\times d}
+$$
+
+$$
+\left\|\frac{\partial \mathcal{L}}{\partial \boldsymbol{W}_k}\right\|_F^2=d^2\cdot\Theta\left(\frac{1}{d}\right)^2
+$$
+
+$$
+\left\|\frac{\partial \mathcal{L}}{\partial \boldsymbol{W}_k}\right\|_F^2=d^2\cdot\Theta\left(\frac{1}{d^2}\right)
+$$
+
+$$
+\left\|\frac{\partial \mathcal{L}}{\partial \boldsymbol{W}_k}\right\|_F^2=\Theta(1)
+$$
+
+$$
+\Delta \mathcal{L}_k\approx-\eta_k\left\|\frac{\partial \mathcal{L}}{\partial \boldsymbol{W}_k}\right\|_F^2
+$$
+
+$$
+\Delta \mathcal{L}_k=\Theta(1)\Rightarrow \eta_k\Theta(1)=\Theta(1)
+$$
+
+$$
+\eta_k=\Theta(1)
+$$
+
+输入层梯度：
+
+$$
+\frac{\partial \mathcal{L}}{\partial \boldsymbol{W}_{in}}=\boldsymbol{X}^{\top}\frac{\partial \mathcal{L}}{\partial \boldsymbol{Y}_{in}}
+$$
+
+$$
+\frac{\partial \mathcal{L}}{\partial \boldsymbol{Y}_{in}}=\frac{\partial \boldsymbol{Y}_{out}}{\partial \boldsymbol{Y}_{in}}\cdot\frac{\partial \mathcal{L}}{\partial \boldsymbol{Y}_{out}}
+$$
+
+$$
+\frac{\partial \mathcal{L}}{\partial \boldsymbol{Y}_{out}}=\frac{\partial \mathcal{L}}{\partial \boldsymbol{Z}}\boldsymbol{W}_{out}^{\top}
+$$
+
+$$
+\mathrm{RMS}\left(\frac{\partial \mathcal{L}}{\partial \boldsymbol{Y}_{out}}\right)=\Theta\left(\frac{1}{d}\right)
+$$
+
+$$
+\mathrm{RMS}\left(\frac{\partial \boldsymbol{Y}_{out}}{\partial \boldsymbol{Y}_{in}}\right)=\Theta(1)
+$$
+
+$$
+\mathrm{RMS}\left(\frac{\partial \mathcal{L}}{\partial \boldsymbol{Y}_{in}}\right)=\Theta(1)\cdot\Theta\left(\frac{1}{d}\right)
+$$
+
+$$
+\mathrm{RMS}\left(\frac{\partial \mathcal{L}}{\partial \boldsymbol{Y}_{in}}\right)=\Theta\left(\frac{1}{d}\right)
+$$
+
+$$
+\mathrm{RMS}(\boldsymbol{X})=\Theta(1)
+$$
+
+$$
+\mathrm{RMS}\left(\frac{\partial \mathcal{L}}{\partial \boldsymbol{W}_{in}}\right)=\Theta\left(\frac{1}{d}\right)
+$$
+
+$$
+\boldsymbol{W}_{in}\in\mathbb{R}^{d_{in}\times d}
+$$
+
+$$
+\left\|\frac{\partial \mathcal{L}}{\partial \boldsymbol{W}_{in}}\right\|_F^2=d_{in}\cdot d\cdot\Theta\left(\frac{1}{d}\right)^2
+$$
+
+$$
+d_{in}=\Theta(1)
+$$
+
+$$
+\left\|\frac{\partial \mathcal{L}}{\partial \boldsymbol{W}_{in}}\right\|_F^2=\Theta(d)\cdot\Theta\left(\frac{1}{d^2}\right)
+$$
+
+$$
+\left\|\frac{\partial \mathcal{L}}{\partial \boldsymbol{W}_{in}}\right\|_F^2=\Theta\left(\frac{1}{d}\right)
+$$
+
+$$
+\Delta \mathcal{L}_{in}\approx-\eta_{in}\left\|\frac{\partial \mathcal{L}}{\partial \boldsymbol{W}_{in}}\right\|_F^2
+$$
+
+$$
+\Delta \mathcal{L}_{in}=\Theta(1)\Rightarrow \eta_{in}\Theta\left(\frac{1}{d}\right)=\Theta(1)
+$$
+
+$$
+\eta_{in}\propto d
+$$
+
+总结：
+
+$$
+\mathrm{RMS}\left(\frac{\partial \mathcal{L}}{\partial \boldsymbol{W}_{out}}\right)=\Theta(1)
+$$
+
+$$
+\left\|\frac{\partial \mathcal{L}}{\partial \boldsymbol{W}_{out}}\right\|_F^2=\Theta(d)
+$$
+
+$$
+\eta_{out}\propto\frac{1}{d}
+$$
+
+$$
+\mathrm{RMS}\left(\frac{\partial \mathcal{L}}{\partial \boldsymbol{W}_k}\right)=\Theta\left(\frac{1}{d}\right)
+$$
+
+$$
+\left\|\frac{\partial \mathcal{L}}{\partial \boldsymbol{W}_k}\right\|_F^2=\Theta(1)
+$$
+
+$$
+\eta_k=\Theta(1)
+$$
+
+$$
+\mathrm{RMS}\left(\frac{\partial \mathcal{L}}{\partial \boldsymbol{W}_{in}}\right)=\Theta\left(\frac{1}{d}\right)
+$$
+
+$$
+\left\|\frac{\partial \mathcal{L}}{\partial \boldsymbol{W}_{in}}\right\|_F^2=\Theta\left(\frac{1}{d}\right)
+$$
+
+$$
+\eta_{in}\propto d
+$$
+
+
 ## 参考资料
 
 1. Greg Yang, Edward J. Hu, Igor Babuschkin, Szymon Sidor, Xiaodong Liu, David Farhi, Nick Ryder, Jakub Pachocki, Weizhu Chen, Jianfeng Gao. [Tensor Programs V: Tuning Large Neural Networks via Zero-Shot Hyperparameter Transfer](https://arxiv.org/abs/2203.03466). NeurIPS 2021. [PDF](https://arxiv.org/pdf/2203.03466)

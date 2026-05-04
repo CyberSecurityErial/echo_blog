@@ -7,6 +7,19 @@ caches:
   images:
     dir: :cacheDir/images
 
+markup:
+  goldmark:
+    extensions:
+      passthrough:
+        enable: true
+        delimiters:
+          block:
+            - ["$$", "$$"]
+            - ["\\[", "\\]"]
+          inline:
+            - ["\\(", "\\)"]
+            - ["$", "$"]
+
 params:
   env: production
   defaultTheme: auto
