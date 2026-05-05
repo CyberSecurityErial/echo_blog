@@ -23,6 +23,7 @@ markup:
 params:
   env: production
   defaultTheme: auto
+  disableSpecial1stPost: true
   ShowReadingTime: true
   ShowCodeCopyButtons: true
   ShowToc: true
