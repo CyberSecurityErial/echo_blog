@@ -1,16 +1,18 @@
 ---
 date: '2026-05-05T10:30:00+08:00'
 draft: false
-title: 'LLM System 01: PD 分离学习地图'
+title: 'LLM System: PD 分离 00 - 学习地图'
 categories: ["AI"]
 tags: ["LLM", "LLM System", "Serving", "PD Disaggregation", "KV Cache"]
-series: ["LLM System"]
-series_order: 1
+series: ["LLM System", "PD Disaggregation"]
+series_order: 0
 weight: 1
 math: true
+aliases:
+  - /posts/llm-system-01-pd-disaggregation-map/
 ---
 
-> 这篇文章是 LLM System 系列的第一篇，也是 PD 分离这个主题的学习入口。是笔者让gpt-5.5通过联网搜索帮自己制定的系统性学习方案。笔者会根据这个方案来确定如何学习PD分离的整套机制。目标不是先把所有论文细节读完，而是先建立一张可以持续填充的地图：该读什么、该推导什么、该写什么代码、最后应该能回答什么问题。
+> 这篇文章是 LLM System 系列里 PD 分离子专题的第 0 篇，也是这个主题的学习入口。是笔者让gpt-5.5通过联网搜索帮自己制定的系统性学习方案。笔者会根据这个方案来确定如何学习PD分离的整套机制。目标不是先把所有论文细节读完，而是先建立一张可以持续填充的地图：该读什么、该推导什么、该写什么代码、最后应该能回答什么问题。
 
 这个系列暂时围绕一个问题展开：**为什么现代 LLM serving 系统越来越关心 prefill/decode disaggregation，也就是 PD 分离？**
 
@@ -766,4 +768,3 @@ PD 分离的本质不是“把服务拆成两个进程”，而是：
 | [Splitwise improves GPU usage by splitting LLM inference phases](https://www.microsoft.com/en-us/research/blog/splitwise-improves-gpu-usage-by-splitting-llm-inference-phases/) | Splitwise 作者团队博客，适合快速建立 phase splitting 直觉 |
 | [Deploying DeepSeek with PD Disaggregation and Large-Scale Expert Parallelism on 96 H100 GPUs](https://www.lmsys.org/blog/2025-05-05-large-scale-ep/) | SGLang / DeepSeek / PD disaggregation / large-scale EP 的生产案例 |
 | [Mooncake Docs](https://kvcache-ai.github.io/Mooncake/) | 跟踪 Mooncake 与 vLLM、SGLang、LMCache、NIXL 的集成动态 |
-
