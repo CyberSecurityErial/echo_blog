@@ -303,6 +303,43 @@ V_new: [B, 1, H_KV, d_h]  -- 写入 kvcache
 连续的allocate在大容量的时候会很费时间。而且factor也不好选择。
 pa的办法是不以一个KV为分配单位，而是以KV_block_size大小分配。如果一个请求的token长度是68，block_size的大小是32，则消耗3个block。这样最多浪费一个block的空间。如果只看某一层的 K cache 或 V cache，一个 block 的形状可以理解为 [block_size, HKV, DH]，元素数是 block_size * HKV * DH。K 和 V 两份合起来就是 2 * block_size * HKV * DH。（所以为什么不叫blockattention呢）pa只有划分block还不够，pa还允许了这些block之间在物理上可以不连续，而只需要一个table保存他们之间的顺序即可。
 
-核心思路说完了，但是还是有一些实现的细节，首先table在哪里构建？table放在哪个结构体？
+核心思路说完了，但是还是有一些实现的细节。
 
-未完待续。
+还是从第一性原理出发，既然推理是在做forward，也就是正常计算attention。而计算attention时，写kernel的人（更深入点说是cuda/triton & 驱动）需要从某个地方拿到KVCache。cpu侧的推理框架知道当前计算上下文对应的req拥有哪些gpu block来存放kv。最朴素的做法就是在launch kernel之前把kv table的信息传给kernel。
+
+如果用的是cuda，传table的方式是使用一个memcpy同步table。
+一个stream上执行的任务依次为：(cudaMalloc, 可能会有，就看是否做池化了)->memcpyH2D->Launch Kernel。
+（补充代码实例）
+
+如果用的是triton，传table的方式比较无痛，假设cpu的tensor已经被初始化了：t = torch.tensor([100,100])，直接做t.to('cuda')就行。内部都会被torch封装好。（补充代码实例）
+
+如果用的是别的DSL呢？笔者用GPT5.5做了一番调研，发现可以做异构计算的DSL非常非常多。而且不是所有的DSL都和cuda这套event-stream-async copy的抽象模型一样。
+
+笔者给这里的h-d meta data transfer模型分成三类：1. 类cuda 2. 类torch 3. 状态声明式
+类cuda的例子包括cuda，hip，opencl，ascendC，这类的共性是都有一个任务队列orStream，拷贝和launch都是异步的。用event轮询，做同步。
+类torch的例子包括torch，triton, xla/jax，tensorRT，这类的共性是不暴露host-device交互本身的流程。但实际上相当于一种回调函数的语法糖。
+状态声明式的例子包括openmp, sycl，和类torch不同的是，这里需要device侧声明需要什么buffer，由底层自动在runtime时期调度，决定何时将信息呈递给kernel。
+
+所以笔者在这里认为，如果想设计一个好的推理框架，不应该只把h-d meta data transfer模型设计成上述三者中的一种，而是要足够兼容这三种模型，这样推理框架能适配不同的后端。
+
+大概想了一下，基本上只需要适配这几个通用接口，backend自己实现去就行了：
+声明metadata的属性（包括size，type，所属权，backend-tensor类型等）
+host_acquire  = host/CPU 侧准备访问 metadata
+device_acquire = device/GPU 侧准备访问 metadata
+host_release  = host/CPU 侧访问结束
+device_release = device/GPU 侧访问结束
+实际用的时候，用法就是：
+host_acquire(op=read)
+read()
+host_release()
+device_acquire(op=write)
+write()
+write_release()
+看似很完美，但是@Fain（https://github.com/Koas-W）给笔者指出了一个设计上的致命错误，导致笔者放弃了做这种统一前端的设计。这种统一前端只能用于eager模式，但是不能适配cuda graph。（且不说其他backend是否支持graph，假设都支持也是会有很大问题的）
+
+原因是这样的，如果我们做语义上的backend无感知抽象，那acquire和release必然是一个动态的语义。因为不同backend的数据驻留形式不同，有的会在cpu-gpu都驻留数据，有的则是二选一驻留。因此在做同步的时候，抽象回调函数实际链接到的的后端接口需要判断驻留的模式，这就天然不适配cuda graph。因为上述的判断逻辑就形成了一种if分支，这个刚好是cuda graph最讨厌的。cuda graph在capture了之后，每次都执行一样的操作。此外还有一个问题，cpu-gpu的数据可能不同步，这就需要维护一个dirty位。基于dirty bit的判断也是对graph不友好的。
+
+当然上述是具体讲了一个case描述，从原理来讲也是这样的，一切这种兼容动态backend的设计都和cuda graph天生不兼容，例如nccl的多transport后端。我们的项目里如果想支持eager模式，用这种动态backend是ok的，但是如果是graph模式就不行了。为了性能，那还是一开始就支持graph吧。
+
+似乎有点跑题了-.-
+
