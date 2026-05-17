@@ -29,6 +29,9 @@ params:
   ShowToc: true
   ShowBreadCrumbs: true
   ShowPostNavLinks: true
+  homeProfile:
+    avatar: "images/avatar.jpg"
+    bio: "22岁互联网社畜nerd，老本行是应用密码学/区块链/隐私计算/联邦学习Theory，现在AI System/AI Theory/AI Agent三修。进无止境，放弃幻想，安心沉淀。"
   socialIcons:
     - name: github
       title: GitHub

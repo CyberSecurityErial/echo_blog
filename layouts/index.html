@@ -12,10 +12,18 @@
 </div>
 {{- end }}
 
-{{- if site.Params.socialIcons }}
-<article class="home-contact">
-  {{ partial "social_icons.html" (dict "align" "") }}
-</article>
+{{- with site.Params.homeProfile }}
+<section class="home-profile-layout" aria-label="个人简介">
+  <aside class="home-profile-sidebar">
+    <img class="home-profile-avatar" src="{{ .avatar | relURL }}" alt="Echo avatar">
+    <p class="home-profile-bio">{{ .bio }}</p>
+    {{- if site.Params.socialIcons }}
+    <div class="home-profile-links">
+      {{ partial "social_icons.html" (dict "align" "") }}
+    </div>
+    {{- end }}
+  </aside>
+</section>
 {{- end }}
 
 {{- end }}
