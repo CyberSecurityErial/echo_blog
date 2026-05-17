@@ -1,3 +1,7 @@
+body {
+    font-family: Consolas, "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif;
+}
+
 .post-type-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -38,10 +42,23 @@
 }
 
 .home-profile-sidebar {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 16px;
     width: 100%;
+    padding-left: 22px;
+}
+
+.home-profile-sidebar::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 8px;
+    border-radius: 999px;
+    background: #7dd3fc;
 }
 
 .home-profile-avatar {
@@ -58,6 +75,7 @@
     color: var(--content);
     font-size: 16px;
     line-height: 1.75;
+    white-space: pre-line;
 }
 
 .home-profile-links .social-icons {
@@ -83,6 +101,7 @@
     .home-profile-sidebar {
         align-items: center;
         text-align: center;
+        padding-left: 18px;
     }
 
     .home-profile-avatar {
