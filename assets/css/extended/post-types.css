@@ -24,3 +24,30 @@
         grid-template-columns: 1fr;
     }
 }
+
+.home-contact {
+    min-height: calc(100vh - var(--header-height) - var(--footer-height) - var(--gap) * 2);
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding-top: 116px;
+    padding-left: clamp(120px, 18vw, 260px);
+}
+
+.home-contact .social-icons {
+    display: flex;
+    gap: 14px;
+}
+
+.home-contact .social-icons a {
+    padding: 8px;
+}
+
+@media (max-width: 760px) {
+    .home-contact {
+        min-height: 50vh;
+        padding-top: 80px;
+        padding-left: 0;
+        justify-content: center;
+    }
+}

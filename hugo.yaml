@@ -29,12 +29,6 @@ params:
   ShowToc: true
   ShowBreadCrumbs: true
   ShowPostNavLinks: true
-  homeInfoParams:
-    Title: "Echo的技术博客"
-    Content: |
-      GitHub: [CyberSecurityErial](https://github.com/CyberSecurityErial)
-
-      Google 邮箱: [csevanvan1024@gmail.com](mailto:csevanvan1024@gmail.com)
   socialIcons:
     - name: github
       title: GitHub

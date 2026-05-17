@@ -12,8 +12,10 @@
 </div>
 {{- end }}
 
-{{- if site.Params.homeInfoParams }}
-{{- partial "home_info.html" . }}
+{{- if site.Params.socialIcons }}
+<article class="home-contact">
+  {{ partial "social_icons.html" (dict "align" "") }}
+</article>
 {{- end }}
 
 {{- end }}
