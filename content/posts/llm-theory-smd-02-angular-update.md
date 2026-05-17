@@ -224,46 +224,327 @@ math: true
 
 ### 为什么 grad norm 比 weight norm 更有信息量？
 
-这里需要说得精确一点。
+这里需要说得精确一点。不是说 raw gradient norm 天然比 weight norm 更“尺度无关”。事实上，对于 scale-invariant weight，论文 Lemma 1 明确给出：
 
-不是说 raw gradient norm 天然比 weight norm 更“尺度无关”。事实上，论文中的 Lemma 1 明确告诉我们：
+{{< math >}}
+\left\langle
+\boldsymbol{w}_t,
+\left.
+\frac{\partial L}{\partial \boldsymbol{w}}
+\right|_{\boldsymbol{w}=\boldsymbol{w}_t}
+\right\rangle
+=
+0
+{{< /math >}}
+
+以及：
 
 {{< math >}}
 \left.
 \frac{\partial L}{\partial \boldsymbol{w}}
-\right|_{\boldsymbol{w}=\alpha \boldsymbol{w}_t}
+\right|_{\boldsymbol{w}=k \boldsymbol{w}_t}
 =
-\frac{1}{\alpha}
+\frac{1}{k}
 \left.
 \frac{\partial L}{\partial \boldsymbol{w}}
 \right|_{\boldsymbol{w}=\boldsymbol{w}_t}
 {{< /math >}}
 
-也就是说，raw gradient norm 本身也是会随 weight scale 改变的。
+第一个式子说明任务梯度是切向的；第二个式子说明 raw gradient norm 本身也会随着 weight scale 改变。权重放大 $k$ 倍，raw gradient 会缩小 $k$ 倍。
 
-但是相比只看 weight norm，gradient norm 至少包含了 loss landscape 对当前方向的响应信息。weight norm 只告诉我们：
-
-{{< math >}}
-\text{当前半径有多大}
-{{< /math >}}
-
-而 gradient norm 告诉我们：
-
-{{< math >}}
-\text{在当前方向上，loss 还在多强地推动模型变化}
-{{< /math >}}
-
-尤其是 unit gradient norm：
+所以，如果只看 raw gradient norm：
 
 {{< math >}}
 \left\lVert
 \left.
 \frac{\partial L}{\partial \boldsymbol{w}}
-\right|_{\boldsymbol{w}=\tilde{\boldsymbol{w}}_t}
+\right|_{\boldsymbol{w}=\boldsymbol{w}_t}
 \right\rVert_2
 {{< /math >}}
 
-它消除了 weight norm 的尺度影响，更接近单位球面上的真实优化信号。
+它并不纯粹。它混合了两个因素：
+
+{{< math >}}
+\text{当前方向上的真实优化信号}
+{{< /math >}}
+
+和：
+
+{{< math >}}
+\text{权重半径带来的尺度缩放}
+{{< /math >}}
+
+为了把这两个东西拆开，还是要回到 SMD 的球面图像。把权重写成：
+
+{{< math >}}
+\boldsymbol{w}_t
+=
+r_t\boldsymbol{u}_t
+{{< /math >}}
+
+其中：
+
+{{< math >}}
+r_t
+=
+\lVert \boldsymbol{w}_t \rVert_2
+{{< /math >}}
+
+是半径，
+
+{{< math >}}
+\boldsymbol{u}_t
+=
+\frac{\boldsymbol{w}_t}{\lVert \boldsymbol{w}_t \rVert_2}
+{{< /math >}}
+
+是方向。对于带 normalization 的 scale-invariant weight，模型函数主要由方向 $\boldsymbol{u}_t$ 决定，而不是由半径 $r_t$ 决定。比较粗略地说：
+
+{{< math >}}
+f(X;\boldsymbol{w}_t)
+=
+f(X;r_t\boldsymbol{u}_t)
+\approx
+f(X;\boldsymbol{u}_t)
+{{< /math >}}
+
+所以 weight norm 主要告诉我们：
+
+{{< math >}}
+\text{当前权重半径有多大}
+{{< /math >}}
+
+它不直接告诉我们：
+
+{{< math >}}
+\text{loss 是否还在推动模型方向变化}
+{{< /math >}}
+
+这就是 weight norm 的局限。它是半径信息，不是方向空间里的优化信号。
+
+但 raw gradient norm 也不能直接拿来当“模型快收敛了”的证据。根据 Lemma 1：
+
+{{< math >}}
+\left.
+\frac{\partial L}{\partial \boldsymbol{w}}
+\right|_{\boldsymbol{w}=\boldsymbol{w}_t}
+=
+\frac{1}{\lVert \boldsymbol{w}_t \rVert_2}
+\left.
+\frac{\partial L}{\partial \boldsymbol{w}}
+\right|_{\boldsymbol{w}=\boldsymbol{u}_t}
+{{< /math >}}
+
+为了简洁，记：
+
+{{< math >}}
+\boldsymbol{g}_t
+=
+\left.
+\frac{\partial L}{\partial \boldsymbol{w}}
+\right|_{\boldsymbol{w}=\boldsymbol{w}_t}
+,\qquad
+\tilde{\boldsymbol{g}}_t
+=
+\left.
+\frac{\partial L}{\partial \boldsymbol{w}}
+\right|_{\boldsymbol{w}=\boldsymbol{u}_t}
+{{< /math >}}
+
+那么：
+
+{{< math >}}
+\boldsymbol{g}_t
+=
+\frac{1}{r_t}
+\tilde{\boldsymbol{g}}_t
+{{< /math >}}
+
+所以：
+
+{{< math >}}
+\lVert \boldsymbol{g}_t \rVert_2
+=
+\frac{1}{r_t}
+\lVert \tilde{\boldsymbol{g}}_t \rVert_2
+{{< /math >}}
+
+这就很直观了。raw gradient norm 变小，可能是因为 $\lVert \tilde{\boldsymbol{g}}_t \rVert_2$ 真的变小了，也可能只是因为 $r_t$ 变大了。
+
+{{< math >}}
+\lVert \boldsymbol{g}_t \rVert_2
+=
+\frac{
+\lVert \tilde{\boldsymbol{g}}_t \rVert_2
+}{
+r_t
+}
+{{< /math >}}
+
+所以 raw gradient norm 本身也不能直接等价于“模型快收敛了”。更准确地说，$\lVert \boldsymbol{g}_t \rVert_2$ 是一个被半径 $r_t$ 缩放过的梯度信号；而 $\lVert \tilde{\boldsymbol{g}}_t \rVert_2$ 才更接近单位球面上的真实优化信号。
+
+这也是为什么“grad norm 比 weight norm 更有信息量”这句话要再精确一点：真正更有信息量的是 unit gradient norm。weight norm 是几何位置里的半径信息：
+
+{{< math >}}
+\text{我离原点多远？}
+{{< /math >}}
+
+unit gradient norm 是优化动力学里的信号强度：
+
+{{< math >}}
+\text{loss 还想多强地推动我在球面上转？}
+{{< /math >}}
+
+对于 normalized network，模型函数主要由方向决定，所以“球面上的推动力”比“当前半径”更直接接近模型变化。
+
+这也解释了为什么 effective learning rate 还不够。已有工作会定义：
+
+{{< math >}}
+\eta_{\mathrm{eff}}
+=
+\frac{\eta}{\lVert \boldsymbol{w}_t \rVert_2^2}
+=
+\frac{\eta}{r_t^2}
+{{< /math >}}
+
+这个量回答的是：
+
+{{< math >}}
+\text{当前半径 } r_t \text{ 会如何缩放原始学习率 } \eta
+{{< /math >}}
+
+但它没有回答：
+
+{{< math >}}
+\text{这一轮最终方向变化到底有多大？}
+{{< /math >}}
+
+因为方向变化不仅取决于系数 $\eta_{\mathrm{eff}}$，还取决于 $\lVert \tilde{\boldsymbol{g}}_t \rVert_2$。从单位球面上的近似更新看：
+
+{{< math >}}
+\boldsymbol{u}_{t+1}
+\approx
+\boldsymbol{u}_t
+-
+\frac{\eta}{\lVert \boldsymbol{w}_t \rVert_2^2}
+\left.
+\frac{\partial L}{\partial \boldsymbol{w}}
+\right|_{\boldsymbol{w}=\boldsymbol{u}_t}
+{{< /math >}}
+
+也就是：
+
+{{< math >}}
+\boldsymbol{u}_{t+1}
+\approx
+\boldsymbol{u}_t
+-
+\eta_{\mathrm{eff}}
+\tilde{\boldsymbol{g}}_t
+{{< /math >}}
+
+而 angular update 的小角度近似是：
+
+{{< math >}}
+\Delta_t
+\approx
+\tan(\Delta_t)
+=
+\frac{\eta}{\lVert \boldsymbol{w}_t \rVert_2}
+\left\lVert
+\left.
+\frac{\partial L}{\partial \boldsymbol{w}}
+\right|_{\boldsymbol{w}=\boldsymbol{w}_t}
+\right\rVert_2
+{{< /math >}}
+
+代入 $\lVert \boldsymbol{g}_t \rVert_2 = \lVert \tilde{\boldsymbol{g}}_t \rVert_2 / r_t$，得到：
+
+{{< math >}}
+\Delta_t
+\approx
+\frac{\eta}{r_t}
+\cdot
+\frac{
+\lVert \tilde{\boldsymbol{g}}_t \rVert_2
+}{
+r_t
+}
+=
+\frac{\eta}{r_t^2}
+\lVert \tilde{\boldsymbol{g}}_t \rVert_2
+{{< /math >}}
+
+也就是：
+
+{{< math >}}
+\boxed{
+\Delta_t
+\approx
+\eta_{\mathrm{eff}}
+\cdot
+\lVert \tilde{\boldsymbol{g}}_t \rVert_2
+}
+{{< /math >}}
+
+这个式子非常关键。它说明 $\eta_{\mathrm{eff}}$ 只是 angular update 里的一个因子，而不是完整的更新幅度。完整的角更新需要同时看“半径修正后的学习率”和“单位球面上的梯度强度”：
+
+{{< math >}}
+\text{Angular Update}
+=
+\text{半径修正后的学习率}
+\times
+\text{单位球面上的梯度强度}
+{{< /math >}}
+
+所以，真正合理的是把三者关系写清楚：
+
+{{< math >}}
+\lVert \boldsymbol{g}_t \rVert_2
+=
+\frac{
+\lVert \tilde{\boldsymbol{g}}_t \rVert_2
+}{
+r_t
+}
+{{< /math >}}
+
+{{< math >}}
+\eta_{\mathrm{eff}}
+=
+\frac{\eta}{r_t^2}
+{{< /math >}}
+
+{{< math >}}
+\Delta_t
+\approx
+\eta_{\mathrm{eff}}
+\lVert \tilde{\boldsymbol{g}}_t \rVert_2
+{{< /math >}}
+
+也就是：
+
+{{< math >}}
+\text{weight norm}
+\Rightarrow
+\text{半径状态}
+{{< /math >}}
+
+{{< math >}}
+\text{unit gradient norm}
+\Rightarrow
+\text{方向空间里的优化信号强度}
+{{< /math >}}
+
+{{< math >}}
+\text{angular update}
+\Rightarrow
+\text{单步有效模型变化}
+{{< /math >}}
+
+所以，“grad norm 比 weight norm 更有信息量”这句话要精确理解为：
+
+> 在带 normalization 的网络里，weight norm 只描述半径；raw gradient norm 虽然也受半径影响，但它至少包含 loss landscape 对当前方向的响应；进一步去掉半径影响后的 unit gradient norm，才是单位球面上更真实的优化信号。
 
 因此，更准确的 insight 应该是：
 
