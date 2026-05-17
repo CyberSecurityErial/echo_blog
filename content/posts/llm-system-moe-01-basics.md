@@ -1,11 +1,15 @@
 ---
 date: '2026-05-14T01:16:50+08:00'
 draft: true
-title: 'MoE 基础知识'
+title: 'LLM System: MoE 01 - 基础知识'
 categories: ["LLM System"]
 tags: ["LLM", "LLM System", "MoE"]
-series: ["LLM System"]
+series: ["LLM System", "MoE"]
+series_order: 1
+weight: 1
 math: true
+aliases:
+  - /posts/llm-system-moe-basics/
 ---
 
 这篇文章就是忘了回来查一查用的。

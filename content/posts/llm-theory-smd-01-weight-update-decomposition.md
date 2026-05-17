@@ -1,16 +1,18 @@
 ---
 date: '2026-05-17T10:15:54+08:00'
 draft: false
-title: 'LLM Theory 03: 权重更新的拆解——SMD'
+title: 'LLM Theory: SMD 01 - 权重更新的拆解'
 categories: ["LLM Theory"]
 tags: ["LLM", "LLM Theory", "Optimization", "SMD", "Normalization", "Weight Decay", "SGD"]
-series: ["LLM Theory"]
-series_order: 3
+series: ["LLM Theory", "SMD"]
+series_order: 1
 weight: 3
 math: true
+aliases:
+  - /posts/llm-theory-03-smd/
 ---
 
-> 本文是 LLM Theory 系列中关于 Spherical Motion Dynamics（SMD）的学习笔记，主要参考 Wan et al. 的
+> 本文是 LLM Theory 下 SMD 专题的第一篇，是关于 Spherical Motion Dynamics（SMD）的学习笔记，主要参考 Wan et al. 的
 > [Spherical Motion Dynamics: Learning Dynamics of Neural Network with Normalization, Weight Decay, and SGD](https://arxiv.org/abs/2006.08419)
 > 以及 NeurIPS 2021 版本
 > [Spherical Motion Dynamics: Learning Dynamics of Normalized Neural Network using SGD and Weight Decay](https://proceedings.neurips.cc/paper/2021/hash/326a8c055c0d04f5b06544665d8bb3ea-Abstract.html)。

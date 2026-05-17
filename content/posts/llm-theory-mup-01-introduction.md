@@ -1,13 +1,15 @@
 ---
 date: '2026-05-04T14:10:04+08:00'
 draft: false
-title: 'LLM Theory 01: MuP'
+title: 'LLM Theory: MuP 01 - MuP 介绍'
 categories: ["LLM Theory"]
-tags: ["LLM", "Pretraining", "MuP", "Hyperparameter Transfer"]
-series: ["LLM Theory"]
+tags: ["LLM", "LLM Theory", "Pretraining", "MuP", "Hyperparameter Transfer"]
+series: ["LLM Theory", "MuP"]
 series_order: 1
 weight: 1
 math: true
+aliases:
+  - /posts/llm-theory-01-mup/
 ---
 
 > 这篇文章是关于 LLM 预训练中 MuP / μP 的学习笔记，主要参考原论文
