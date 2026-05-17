@@ -1,6 +1,6 @@
 ---
 date: '2026-05-17T17:56:11+08:00'
-draft: true
+draft: false
 title: 'LLM Theory: SMD 02 - Angular Update 才更接近真实改变量'
 categories: ["LLM Theory"]
 tags: ["LLM", "LLM Theory", "Optimization", "SMD", "Effective Learning Rate", "Angular Update", "Weight Decay"]
