@@ -2,7 +2,7 @@
 date: '2026-05-10T12:48:00+08:00'
 draft: true
 title: 'LLM System: KV Cache 查询 03 - pico-vLLM Attention 源码'
-categories: ["AI"]
+categories: ["LLM System"]
 tags: ["LLM", "LLM System", "Serving", "KV Cache", "pico-vLLM", "Attention"]
 series: ["LLM System", "KV Cache Lookup"]
 series_order: 3

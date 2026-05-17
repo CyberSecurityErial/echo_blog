@@ -2,7 +2,7 @@
 date: '2026-05-05T10:30:00+08:00'
 draft: false
 title: 'LLM System: PD 分离 00 - 学习地图'
-categories: ["AI"]
+categories: ["LLM System"]
 tags: ["LLM", "LLM System", "Serving", "PD Disaggregation", "KV Cache"]
 series: ["LLM System", "PD Disaggregation"]
 series_order: 0

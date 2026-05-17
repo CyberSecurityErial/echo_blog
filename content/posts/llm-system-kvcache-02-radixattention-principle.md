@@ -2,7 +2,7 @@
 date: '2026-05-10T12:47:00+08:00'
 draft: true
 title: 'LLM System: KV Cache 查询 02 - RadixAttention 原理'
-categories: ["AI"]
+categories: ["LLM System"]
 tags: ["LLM", "LLM System", "Serving", "KV Cache", "RadixAttention"]
 series: ["LLM System", "KV Cache Lookup"]
 series_order: 2

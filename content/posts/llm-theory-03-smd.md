@@ -1,8 +1,8 @@
 ---
 date: '2026-05-17T10:15:54+08:00'
 draft: false
-title: '权重更新的拆解——SMD'
-categories: ["AI"]
+title: 'LLM Theory 03: 权重更新的拆解——SMD'
+categories: ["LLM Theory"]
 tags: ["LLM", "LLM Theory", "Optimization", "SMD", "Normalization", "Weight Decay", "SGD"]
 series: ["LLM Theory"]
 series_order: 3

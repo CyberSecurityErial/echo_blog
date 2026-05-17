@@ -1,0 +1,26 @@
+{{- define "main" }}
+
+<header class="page-header">
+  <h1>文章</h1>
+</header>
+
+{{- $mainSections := site.Params.mainSections | default (slice "posts") }}
+{{- $pages := where site.RegularPages "Type" "in" $mainSections }}
+{{- $pages = where $pages "Params.hiddenInHomeList" "!=" "true" }}
+{{- $sections := slice "LLM Theory" "LLM System" "杂谈" "工程踩坑" }}
+
+<div class="post-type-grid">
+  {{- range $section := $sections }}
+  {{- $sectionPages := where $pages "Params.categories" "intersect" (slice $section) }}
+  {{- $href := printf "categories/%s/" ($section | urlize) | absURL }}
+  <article class="post-entry post-type-entry">
+    <header class="entry-header">
+      <h2>{{ $section }}</h2>
+    </header>
+    <footer class="entry-footer">{{ len $sectionPages }} 篇文章</footer>
+    <a class="entry-link" aria-label="open {{ $section }}" href="{{ $href }}"></a>
+  </article>
+  {{- end }}
+</div>
+
+{{- end }}

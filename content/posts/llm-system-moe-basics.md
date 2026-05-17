@@ -2,7 +2,7 @@
 date: '2026-05-14T01:16:50+08:00'
 draft: true
 title: 'MoE 基础知识'
-categories: ["AI"]
+categories: ["LLM System"]
 tags: ["LLM", "LLM System", "MoE"]
 series: ["LLM System"]
 math: true

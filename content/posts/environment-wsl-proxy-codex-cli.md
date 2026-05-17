@@ -2,9 +2,9 @@
 date: '2026-05-10T10:48:50+08:00'
 draft: false
 title: '环境踩坑：wsl+proxy+codex cli'
-categories: []
+categories: ["工程踩坑"]
 tags: []
-series: ["环境踩坑"]
+series: ["工程踩坑"]
 series_order:
 ---
 

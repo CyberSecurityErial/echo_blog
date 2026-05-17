@@ -2,7 +2,7 @@
 date: '2026-05-04T14:10:04+08:00'
 draft: false
 title: 'LLM Theory 01: MuP'
-categories: ["AI"]
+categories: ["LLM Theory"]
 tags: ["LLM", "Pretraining", "MuP", "Hyperparameter Transfer"]
 series: ["LLM Theory"]
 series_order: 1

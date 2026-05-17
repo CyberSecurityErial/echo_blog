@@ -2,7 +2,7 @@
 date: '2026-05-10T12:46:00+08:00'
 draft: false
 title: 'LLM System: KV Cache 查询 01 - PagedAttention 原理'
-categories: ["AI"]
+categories: ["LLM System"]
 tags: ["LLM", "LLM System", "Serving", "KV Cache", "PagedAttention"]
 series: ["LLM System", "KV Cache Lookup"]
 series_order: 1

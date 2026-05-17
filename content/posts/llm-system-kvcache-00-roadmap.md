@@ -2,7 +2,7 @@
 date: '2026-05-10T12:45:00+08:00'
 draft: true
 title: 'LLM System: KV Cache 查询 00 - 学习地图'
-categories: ["AI"]
+categories: ["LLM System"]
 tags: ["LLM", "LLM System", "Serving", "KV Cache", "Attention"]
 series: ["LLM System", "KV Cache Lookup"]
 series_order: 0
