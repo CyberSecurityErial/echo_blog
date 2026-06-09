@@ -74,14 +74,15 @@ class LLMSystemSchedulePostTest(unittest.TestCase):
             "## PP",
             "## GPipe",
             "## 1F1B",
+            "## interleaved 1F1B",
             "## Chimera",
             "## zero-bubble",
-            "## interleaved 1F1B",
             "## DualPipe",
             "## DualPipeV",
             "## 为什么不考虑通信？",
             "## 削峰填谷",
             "## moe有何不同",
+            "## 如何实现一个调度器",
         ]
         positions = [self.body.index(heading) for heading in expected_headings]
 
