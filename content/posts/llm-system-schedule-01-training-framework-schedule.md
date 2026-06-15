@@ -91,7 +91,7 @@ s3 3 7
 
 ## zero-bubble
 
-dualpipe也利用了这里思想，一句话就是做b阶段的bw分离。
+dualpipe也利用了这里思想，一句话就是做b阶段的dw分离。
 
 前向：
 
@@ -110,17 +110,17 @@ dX是他前序的dY，所以真有依赖的就是dX，但是传统方法都是dW
 
 [在 Perfetto 中打开 ZeroBubble 1F1B trace](https://ui.perfetto.dev/#!/?url=https://CyberSecurityErial.github.io/echo_blog/traces/zerobubble_1f1b_trace.json)
 
-如何实现呢。这个要把backward拆一下，拆成bx和w。然后bx用于替代之前的b，做正常的1f1b逻辑就行。bw用来填充末尾的流水线三角形。
+如何实现呢。这个要把backward拆一下，拆成gradx和gradw。然后gradx用于替代之前的b，做正常的1f1b逻辑就行。dw用来填充末尾的流水线三角形。
 
-还有一点要注意就是一定要让bw在bx之后，否则还是阻挡流水线没意义。
+还有一点要注意就是一定要让gradw在gradx之后，否则还是阻挡流水线没意义。
 
 ## DualPipe 
 
-dualpipe首先吸收了Chimera和zerobubble的特点。做了双向流水线+bw分离。然后还对moe做了优化。
+dualpipe首先吸收了Chimera和zerobubble的特点。做了双向流水线+dw分离。然后还对moe做了优化。
 
 [在 Perfetto 中打开 DualPipe trace](https://ui.perfetto.dev/#!/?url=https://CyberSecurityErial.github.io/echo_blog/traces/dualpipe_trace.json)
 
-所以实现上其实就分为三块，双线+bw分离+moe特化。这一节就只谈moe特化。moe引入之后会出现什么问题呢？多了两次alltoall。时间开销大。
+所以实现上其实就分为三块，双线+dw分离+moe特化。这一节就只谈moe特化。moe引入之后会出现什么问题呢？多了两次alltoall。时间开销大。
 
 针对moe的特化主要是通算重叠+通算重叠的补丁。
 
@@ -158,7 +158,7 @@ i和j是“配对”的，配对指的是两个能被融合在1f1b的mb。
 
 按照这种实现，做完combF_i就可以往下一个stage发forward（isend）了。
 
-然后可以发现的是，刚好alltoall通信很久，所以zerobubble的bw分离思想在这里更好用了。
+然后可以发现的是，刚好alltoall通信很久，所以zerobubble的dw分离思想在这里更好用了。
 
 ```text
 计算队列    mlpB_j mlpF_i (mlpBw_j) attnB_j (attnBw_j) attnF_{i+1}
