@@ -16,30 +16,30 @@ math: true
 
 Router 计算每个 token 应该路由到哪些 expert。
 
-![MoE Router 计算 01](/images/llm-system-basic-quick-reference-moe/01-router-01.png)
+![MoE Router 计算 01](/echo_blog/images/llm-system-basic-quick-reference-moe/01-router-01.png)
 
-![MoE Router 计算 02](/images/llm-system-basic-quick-reference-moe/02-router-02.png)
+![MoE Router 计算 02](/echo_blog/images/llm-system-basic-quick-reference-moe/02-router-02.png)
 
 ### Dispatch
 
 Dispatch 根据 router 结果，把 token 分发到对应 expert 的输入 buffer。
 
-![MoE Dispatch 计算 01](/images/llm-system-basic-quick-reference-moe/03-dispatch-01.png)
+![MoE Dispatch 计算 01](/echo_blog/images/llm-system-basic-quick-reference-moe/03-dispatch-01.png)
 
-![MoE Dispatch 计算 02](/images/llm-system-basic-quick-reference-moe/04-dispatch-02.png)
+![MoE Dispatch 计算 02](/echo_blog/images/llm-system-basic-quick-reference-moe/04-dispatch-02.png)
 
 ### FFN
 
 每个 expert 内部执行自己的 FFN / MLP 计算。
 
-![MoE FFN 计算 01](/images/llm-system-basic-quick-reference-moe/05-ffn-01.png)
+![MoE FFN 计算 01](/echo_blog/images/llm-system-basic-quick-reference-moe/05-ffn-01.png)
 
-![MoE FFN 计算 02](/images/llm-system-basic-quick-reference-moe/06-ffn-02.png)
+![MoE FFN 计算 02](/echo_blog/images/llm-system-basic-quick-reference-moe/06-ffn-02.png)
 
 ### Combine
 
 Combine 把各 expert 的输出按路由权重聚合，并还原到 token 维度。
 
-![MoE Combine 计算 01](/images/llm-system-basic-quick-reference-moe/07-combine-01.png)
+![MoE Combine 计算 01](/echo_blog/images/llm-system-basic-quick-reference-moe/07-combine-01.png)
 
-![MoE Combine 计算 02](/images/llm-system-basic-quick-reference-moe/08-combine-02.png)
+![MoE Combine 计算 02](/echo_blog/images/llm-system-basic-quick-reference-moe/08-combine-02.png)
