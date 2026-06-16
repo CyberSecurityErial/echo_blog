@@ -38,7 +38,7 @@
       </header>
       {{- if .Summary }}
       <div class="entry-content">
-        <p>{{ .Summary | plainify | htmlUnescape }}</p>
+        <p>{{ .Summary | plainify | htmlUnescape | truncate 180 }}</p>
       </div>
       {{- end }}
       <footer class="entry-footer">
