@@ -23,6 +23,34 @@
     </div>
     {{- end }}
   </aside>
+  <section class="home-recent-posts" aria-label="最近文章">
+    <header class="home-recent-header">
+      <h1>最近文章</h1>
+      <a href="{{ "posts/" | relURL }}">全部文章</a>
+    </header>
+    {{- $mainSections := site.Params.mainSections | default (slice "posts") }}
+    {{- $pages := where site.RegularPages "Type" "in" $mainSections }}
+    {{- $pages = where $pages "Params.hiddenInHomeList" "!=" "true" }}
+    {{- range first 8 $pages }}
+    <article class="post-entry home-post-entry">
+      <header class="entry-header">
+        <h2>{{ .Title }}</h2>
+      </header>
+      {{- if .Summary }}
+      <div class="entry-content">
+        <p>{{ .Summary | plainify | htmlUnescape }}</p>
+      </div>
+      {{- end }}
+      <footer class="entry-footer">
+        <span>{{ .Date.Format "2006-01-02" }}</span>
+        {{- with .Params.categories }}
+        <span>&nbsp;·&nbsp;{{ delimit . ", " }}</span>
+        {{- end }}
+      </footer>
+      <a class="entry-link" aria-label="open {{ .Title }}" href="{{ .RelPermalink }}"></a>
+    </article>
+    {{- end }}
+  </section>
 </section>
 {{- end }}
 

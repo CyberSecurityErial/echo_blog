@@ -1,6 +1,6 @@
 ---
 date: '2026-06-10T00:00:00+08:00'
-draft: true
+draft: false
 title: 'LLM System: 训练框架随笔 01 - PP Schedule 为什么要做成非异步的'
 categories: ["LLM System"]
 tags: ["LLM", "LLM System", "Training", "Training Framework", "Pipeline Parallel", "Schedule"]

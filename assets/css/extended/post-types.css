@@ -37,6 +37,7 @@ body {
     min-height: calc(100vh - var(--header-height) - var(--footer-height) - var(--gap) * 2);
     display: grid;
     grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+    gap: 36px;
     align-items: start;
     padding-top: clamp(24px, 7vh, 72px);
 }
@@ -91,6 +92,39 @@ body {
     padding-inline-start: 0;
 }
 
+.home-recent-posts {
+    min-width: 0;
+}
+
+.home-recent-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+.home-recent-header h1 {
+    margin: 0;
+    font-size: 28px;
+    line-height: 1.25;
+}
+
+.home-recent-header a {
+    color: var(--secondary);
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.home-post-entry {
+    margin-bottom: 12px;
+}
+
+.home-post-entry .entry-header h2 {
+    font-size: 20px;
+    line-height: 1.35;
+}
+
 @media (max-width: 760px) {
     .home-profile-layout {
         display: block;
@@ -110,5 +144,13 @@ body {
 
     .home-profile-links .social-icons a:first-child {
         padding-inline-start: 6px;
+    }
+
+    .home-recent-posts {
+        margin-top: 32px;
+    }
+
+    .home-recent-header h1 {
+        font-size: 24px;
     }
 }
