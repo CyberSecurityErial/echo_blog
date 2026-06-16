@@ -1,6 +1,6 @@
 ---
 date: '2026-06-16T00:00:00+08:00'
-draft: true
+draft: false
 title: 'LLM System: 训练框架随笔 03 - 再读 Megatron Core 看设计模式'
 categories: ["LLM System"]
 tags: ["LLM", "LLM System", "Training", "Training Framework", "Megatron"]
@@ -287,4 +287,3 @@ Megatron这样实现就可以体现出增量的困难，比如这里就无法设
   - 【梯度同步粒度不同】无 VPP 基本按整个 model；VPP 要按 model chunk 跟踪同步状态。
   - 【P2P overlap 支持不同】无 VPP 不支持 overlap_p2p_comm；VPP 支持，并且额外有 warmup/flush overlap 分支。
   - 【shape 处理不同】无 VPP 有 recv_tensor_shapes/send_tensor_shapes/adjust_tensor_shapes_fn；VPP 这里只用一个 tensor_shape，且不支持 adjust_tensor_shapes_fn。
-
