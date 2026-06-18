@@ -16,41 +16,29 @@ math: true
 
 主流这三类：
 
-GPT
+#### GPT
 
-数据-标签形态：
+- 数据-标签形态：
+  - tokens = x[0 : L]
+  - labels = x[1 : L+1]
+- 任务：
+  - 预测下一个tk
 
-tokens = x[0 : L]
+#### BERT
 
-labels = x[1 : L+1]
+- 数据-标签形态
+  - input  = corrupt(x)
+  - labels = x only at masked positions
+- 任务：
+  - 挖空填词，看到左右的tk预测中间的tk
 
-任务：
+#### T5
 
-预测下一个tk
-
-BERT
-
-数据-标签形态
-
-input  = corrupt(x)
-
-labels = x only at masked positions
-
-任务：
-
-挖空填词，看到左右的tk预测中间的tk
-
-T5
-
-数据-标签形态
-
-encoder_input = corrupt_span(x)
-
-decoder_label = removed_spans
-
-任务：
-
-encoder看残缺文本，decoder输出删掉的整个片段
+- 数据-标签形态
+  - encoder_input = corrupt_span(x)
+  - decoder_label = removed_spans
+- 任务：
+  - encoder看残缺文本，decoder输出删掉的整个片段
 
 ## mcore dataset涉及到的系统级优化
 
@@ -64,48 +52,43 @@ mmap存在的代价是A。容易缺页，（读取没有时空局部性会这样
 
 对A问题，mgt做的优化：
 
-document_index
-
-sample_index
-
-shuffle_index
-
-cache
-
-访问密度判断
+- document_index
+- sample_index
+- shuffle_index
+- cache
+- 访问密度判断
 
 对C问题，mgt做的优化：
 
-cache 预建
-
-defer mmap
-
-fast cache load
-
-object storage block cache
+- cache 预建
+- defer mmap
+- fast cache load
+- object storage block cache
 
 先不展开。让ai总结了一下这几个优化所在的位置。方便后续索引。
-
 具体位置在索引AAA这一节。
 
 nv文档提了几个这部分优化的点：
 
-关于启动瓶颈：
+#### 关于启动瓶颈：
 
-nv文档里面具体说了关于大规模load数据的时候容易产生的系统问题：256节点以上，真正的瓶颈在于真正读mb之前，megatron构建读取索引的过程和barrier同步。这部分构件索引主要是文件系统的开销，而barrier则是先让某些代表rank去构建idx，然后其他rank等着，直到代表rank构建完毕才能继续，显著影响整体利用率。
+nv文档里面具体说了关于大规模load数据的时候容易产生的系统问题：256节点以上，真正的瓶颈在于真正读mb之前，megatron构建读取索引的过程和barrier同步。
 
-关于数据的shuffle：
+这部分构件索引主要是文件系统的开销，而barrier则是先让某些代表rank去构建idx，然后其他rank等着，直到代表rank构建完毕才能继续，显著影响整体利用率。
+
+#### 关于数据的shuffle：
 
 因为训练算法上是希望通过随机性去训练/验证泛化性，但是系统上追求的是局部性和确定性，这是一对tradeoff，为了解决这个tradeoff mgt搞了一个shuffleidx相当于做了个确定化的随机，或者说给随机行为提前打表了。
 
-关于启动之后的瓶颈：
+#### 关于启动之后的瓶颈：
 
-因为刚才说了计算idx需要所有rank都barrier，因为不等到idx没办法取对的数据。barrier结束之后就会导致所有rank几乎同时走到mmap阶段了，刚才说过由于首次缺页，mmap的overhead比较大，所以可能会导致OS的fs io爆炸。
+因为刚才说了计算idx需要所有rank都barrier，因为不等到idx没办法取对的数据。
 
-关于解决办法：
+barrier结束之后就会导致所有rank几乎同时走到mmap阶段了，刚才说过由于首次缺页，mmap的overhead比较大，所以可能会导致OS的fs io爆炸。
+
+#### 关于解决办法：
 
 nv希望离线构建dataset idx，用的脚本是tools/prepare_cache.py。然后绕过runtime生成idx这套启动路径：--dataloader-fast-cache-load。
-
 另外还有一种办法就是让mmap本身都变成lazy的，这样不会io burst，用这个参数：--dataloader-defer-npy-index-mmap
 
 ### shuffle index
@@ -116,11 +99,16 @@ nv希望离线构建dataset idx，用的脚本是tools/prepare_cache.py。然后
 
 按index范围选择尽量短的数据类型，index会存在ssd，还会被mmap到memory，而且要给其他rank共享，所以有必要节省空间。
 
-token的dtype一般是uint16或int32
+- token的dtype一般是uint16或int32
+- sampleidx和shuffleidx一般都是int32，太多会上到int64
 
-sampleidx和shuffleidx一般都是int32，太多会上到int64
+GPTDataset 的 index 量级可以直接用 sample 数估算：设训练 token 数为 T、序列长度为 S，则样本数 N≈T/S。MCore 的 `sample_index` 形状是 `[N+1, 2]`，通常用 int32，所以约占 `8N` bytes；`shuffle_index` 形状是 `[N]`，通常用 uint32，所以约占 `4N` bytes；两者合计约 `12N` bytes。
 
-GPTDataset 的 index 量级可以直接用 sample 数估算：设训练 token 数为 T、序列长度为 S，则样本数 N≈T/S。MCore 的 `sample_index` 形状是 `[N+1, 2]`，通常用 int32，所以约占 `8N` bytes；`shuffle_index` 形状是 `[N]`，通常用 uint32，所以约占 `4N` bytes；两者合计约 `12N` bytes。也就是说，seq_length=4096 时，1.2T tokens 大约有 2.93 亿个 sample，对应 `sample_index + shuffle_index` 约 3.5GB；18.5T tokens 大约有 45.2 亿个 sample，对应约 54GB。除此之外还有 `document_index`，大小约为 `4 × document_count × epoch_count` bytes，所以 document 特别多的数据集还会额外放大 index 体积。简而言之，1T token 级别的 Megatron index 通常是几 GB，10T+ token 级别会到几十 GB，30T token 级别可能接近百 GB；这也是为什么 MCore 要专门做 index cache、defer mmap 和 fast cache load。
+也就是说，seq_length=4096 时，1.2T tokens 大约有 2.93 亿个 sample，对应 `sample_index + shuffle_index` 约 3.5GB；18.5T tokens 大约有 45.2 亿个 sample，对应约 54GB。
+
+除此之外还有 `document_index`，大小约为 `4 × document_count × epoch_count` bytes，所以 document 特别多的数据集还会额外放大 index 体积。
+
+简而言之，1T token 级别的 Megatron index 通常是几 GB，10T+ token 级别会到几十 GB，30T token 级别可能接近百 GB；这也是为什么 MCore 要专门做 index cache、defer mmap 和 fast cache load。
 
 ### c++加速构建idx
 
