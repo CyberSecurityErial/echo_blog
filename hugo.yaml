@@ -3,6 +3,10 @@ languageCode: "zh-cn"
 title: "Echo的技术博客"
 theme: ["PaperMod"]
 
+permalinks:
+  page:
+    posts: /posts/:slugorcontentbasename/
+
 caches:
   images:
     dir: :cacheDir/images

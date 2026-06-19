@@ -4,7 +4,10 @@ import unittest
 from pathlib import Path
 
 
-POST_PATH = Path("content/posts/llm-system-schedule-01-training-framework-schedule.md")
+POST_PATH = Path(
+    "content/posts/llm-system/training-schedule/"
+    "llm-system-schedule-01-training-framework-schedule.md"
+)
 
 
 def read_post():

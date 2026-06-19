@@ -3,24 +3,36 @@
 ## 新建文章
 
 ```bash
-hugo new posts/文章文件名.md
+hugo new posts/领域/系列/文章文件名.md
 ```
 
 文件名建议用英文小写和短横线，例如：
 
 ```bash
-hugo new posts/my-first-post.md
+hugo new posts/llm-system/training-framework-notes/my-first-post.md
 ```
 
 ## 编辑文章
 
-文章放在：
+文章按领域和系列归档：
 
 ```text
 content/posts/
+├── llm-system/
+│   └── 系列目录/
+├── llm-theory/
+│   └── 系列目录/
+└── others/
+    └── 系列目录/
 ```
 
 打开对应的 `.md` 文件，正文写在开头的 `---` 下面。
+
+文件所在的子目录只用于源码归档，线上文章地址固定为：
+
+```text
+/posts/文章文件名/
+```
 
 发布前把：
 
@@ -71,9 +83,10 @@ hugo
 ## 常用文件位置
 
 ```text
-hugo.yaml          网站配置
-content/posts/     文章
-static/images/     图片
-themes/PaperMod/   主题，不建议改
+hugo.yaml                         网站配置
+content/posts/llm-system/         LLM System 文章
+content/posts/llm-theory/         LLM Theory 文章
+content/posts/others/             其他文章
+static/images/                    图片
+themes/PaperMod/                  主题，不建议改
 ```
-
