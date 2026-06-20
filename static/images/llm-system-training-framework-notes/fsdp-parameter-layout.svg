@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="title desc">
+  <title id="title">FSDP parameter layout</title>
+  <desc id="desc">A weight matrix and bias vector are flattened, concatenated, padded, and split evenly across four data parallel ranks.</desc>
+  <defs>
+    <style>
+      .title { font: 700 50px Inter, Arial, sans-serif; fill: #172033; }
+      .label { font: 700 28px Inter, Arial, sans-serif; fill: #334155; }
+      .small { font: 600 20px Inter, Arial, sans-serif; fill: #475569; }
+      .cell { font: 700 22px Inter, Arial, sans-serif; fill: #172033; text-anchor: middle; dominant-baseline: middle; }
+      .rank { font: 700 25px Inter, Arial, sans-serif; fill: #172033; text-anchor: middle; }
+      .shard-label { font: 600 19px Inter, Arial, sans-serif; fill: #6d28d9; text-anchor: middle; }
+      .arrow { fill: none; stroke: #475569; stroke-width: 4; marker-end: url(#arrow); }
+      .guide { fill: none; stroke: #7c3aed; stroke-width: 4; marker-end: url(#purple-arrow); }
+    </style>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0 0 L12 6 L0 12 Z" fill="#475569"/>
+    </marker>
+    <marker id="purple-arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0 0 L12 6 L0 12 Z" fill="#7c3aed"/>
+    </marker>
+    <pattern id="padding" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
+      <rect width="16" height="16" fill="#fef3c7"/>
+      <rect width="6" height="16" fill="#f59e0b" opacity=".42"/>
+    </pattern>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0f172a" flood-opacity=".10"/>
+    </filter>
+  </defs>
+
+  <rect width="1920" height="1080" fill="#f8fafc"/>
+  <rect x="55" y="42" width="1810" height="996" rx="30" fill="#fff" stroke="#e2e8f0" stroke-width="2"/>
+  <text x="960" y="112" class="title" text-anchor="middle">FSDP Parameter Layout</text>
+
+  <!-- Original parameters -->
+  <text x="505" y="178" class="label" text-anchor="middle" fill="#1d4ed8">weight</text>
+  <g fill="#eff6ff" stroke="#2563eb" stroke-width="2">
+    <rect x="325" y="205" width="90" height="60"/><rect x="415" y="205" width="90" height="60"/><rect x="505" y="205" width="90" height="60"/><rect x="595" y="205" width="90" height="60"/>
+    <rect x="325" y="265" width="90" height="60"/><rect x="415" y="265" width="90" height="60"/><rect x="505" y="265" width="90" height="60"/><rect x="595" y="265" width="90" height="60"/>
+    <rect x="325" y="325" width="90" height="60"/><rect x="415" y="325" width="90" height="60"/><rect x="505" y="325" width="90" height="60"/><rect x="595" y="325" width="90" height="60"/>
+  </g>
+  <g class="cell">
+    <text x="370" y="235">0</text><text x="460" y="235">1</text><text x="550" y="235">2</text><text x="640" y="235">3</text>
+    <text x="370" y="295">4</text><text x="460" y="295">5</text><text x="550" y="295">6</text><text x="640" y="295">7</text>
+    <text x="370" y="355">8</text><text x="460" y="355">9</text><text x="550" y="355">10</text><text x="640" y="355">11</text>
+  </g>
+
+  <text x="1335" y="178" class="label" text-anchor="middle" fill="#0f766e">bias</text>
+  <g fill="#ecfdf5" stroke="#0f766e" stroke-width="2">
+    <rect x="1285" y="205" width="100" height="60"/><rect x="1285" y="265" width="100" height="60"/><rect x="1285" y="325" width="100" height="60"/>
+  </g>
+  <g class="cell"><text x="1335" y="235">12</text><text x="1335" y="295">13</text><text x="1335" y="355">14</text></g>
+
+  <path class="arrow" d="M505 395 V420 Q505 445 535 445 H900 V475"/>
+  <path class="arrow" d="M1335 395 V420 Q1335 445 1305 445 H1020 Q990 445 990 475"/>
+  <text x="960" y="433" class="label" text-anchor="middle">Flatten + Concatenate</text>
+
+  <!-- Flat parameter -->
+  <text x="215" y="546" class="label">FlatParameter</text>
+  <g stroke="#475569" stroke-width="2">
+    <rect x="385" y="500" width="72" height="70" fill="#f1f5f9"/><rect x="457" y="500" width="72" height="70" fill="#f1f5f9"/>
+    <rect x="529" y="500" width="72" height="70" fill="#f1f5f9"/><rect x="601" y="500" width="72" height="70" fill="#f1f5f9"/>
+    <rect x="673" y="500" width="72" height="70" fill="#f1f5f9"/><rect x="745" y="500" width="72" height="70" fill="#f1f5f9"/>
+    <rect x="817" y="500" width="72" height="70" fill="#f1f5f9"/><rect x="889" y="500" width="72" height="70" fill="#f1f5f9"/>
+    <rect x="961" y="500" width="72" height="70" fill="#f1f5f9"/><rect x="1033" y="500" width="72" height="70" fill="#f1f5f9"/>
+    <rect x="1105" y="500" width="72" height="70" fill="#f1f5f9"/><rect x="1177" y="500" width="72" height="70" fill="#f1f5f9"/>
+    <rect x="1249" y="500" width="72" height="70" fill="#f1f5f9"/><rect x="1321" y="500" width="72" height="70" fill="#f1f5f9"/>
+    <rect x="1393" y="500" width="72" height="70" fill="#f1f5f9"/><rect x="1465" y="500" width="72" height="70" fill="url(#padding)" stroke="#d97706"/>
+  </g>
+  <g class="cell">
+    <text x="421" y="535">0</text><text x="493" y="535">1</text><text x="565" y="535">2</text><text x="637" y="535">3</text>
+    <text x="709" y="535">4</text><text x="781" y="535">5</text><text x="853" y="535">6</text><text x="925" y="535">7</text>
+    <text x="997" y="535">8</text><text x="1069" y="535">9</text><text x="1141" y="535">10</text><text x="1213" y="535">11</text>
+    <text x="1285" y="535">12</text><text x="1357" y="535">13</text><text x="1429" y="535">14</text><text x="1501" y="535">PAD</text>
+  </g>
+  <text x="960" y="610" class="small" text-anchor="middle">numel = 15  →  padded numel = 16  →  shard size = 4</text>
+
+  <!-- Sharding group -->
+  <rect x="160" y="690" width="1600" height="270" rx="28" fill="#f8fafc" stroke="#64748b" stroke-width="2" stroke-dasharray="10 8"/>
+  <text x="960" y="735" class="label" text-anchor="middle">FSDP sharding group (world size = 4)</text>
+  <path class="guide" d="M529 585 V650 H350 V770"/>
+  <path class="guide" d="M817 585 V650 H755 V770"/>
+  <path class="guide" d="M1105 585 V650 H1160 V770"/>
+  <path class="guide" d="M1393 585 V650 H1565 V770"/>
+
+  <g filter="url(#shadow)">
+    <rect x="220" y="775" width="260" height="140" rx="18" fill="#fff" stroke="#94a3b8" stroke-width="2"/>
+    <rect x="625" y="775" width="260" height="140" rx="18" fill="#fff" stroke="#94a3b8" stroke-width="2"/>
+    <rect x="1030" y="775" width="260" height="140" rx="18" fill="#fff" stroke="#94a3b8" stroke-width="2"/>
+    <rect x="1435" y="775" width="260" height="140" rx="18" fill="#fff" stroke="#94a3b8" stroke-width="2"/>
+  </g>
+  <text x="350" y="812" class="rank">Rank 0</text><text x="755" y="812" class="rank">Rank 1</text>
+  <text x="1160" y="812" class="rank">Rank 2</text><text x="1565" y="812" class="rank">Rank 3</text>
+
+  <g fill="#ede9fe" stroke="#7c3aed" stroke-width="2">
+    <rect x="242" y="830" width="54" height="48"/><rect x="296" y="830" width="54" height="48"/><rect x="350" y="830" width="54" height="48"/><rect x="404" y="830" width="54" height="48"/>
+    <rect x="647" y="830" width="54" height="48"/><rect x="701" y="830" width="54" height="48"/><rect x="755" y="830" width="54" height="48"/><rect x="809" y="830" width="54" height="48"/>
+    <rect x="1052" y="830" width="54" height="48"/><rect x="1106" y="830" width="54" height="48"/><rect x="1160" y="830" width="54" height="48"/><rect x="1214" y="830" width="54" height="48"/>
+    <rect x="1457" y="830" width="54" height="48"/><rect x="1511" y="830" width="54" height="48"/><rect x="1565" y="830" width="54" height="48"/>
+    <rect x="1619" y="830" width="54" height="48" fill="url(#padding)" stroke="#d97706"/>
+  </g>
+  <g class="cell">
+    <text x="269" y="854">0</text><text x="323" y="854">1</text><text x="377" y="854">2</text><text x="431" y="854">3</text>
+    <text x="674" y="854">4</text><text x="728" y="854">5</text><text x="782" y="854">6</text><text x="836" y="854">7</text>
+    <text x="1079" y="854">8</text><text x="1133" y="854">9</text><text x="1187" y="854">10</text><text x="1241" y="854">11</text>
+    <text x="1484" y="854">12</text><text x="1538" y="854">13</text><text x="1592" y="854">14</text><text x="1646" y="854">PAD</text>
+  </g>
+  <text x="350" y="900" class="shard-label">Local shard</text><text x="755" y="900" class="shard-label">Local shard</text>
+  <text x="1160" y="900" class="shard-label">Local shard</text><text x="1565" y="900" class="shard-label">Local shard</text>
+
+  <rect x="1270" y="985" width="28" height="28" rx="4" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+  <text x="1312" y="1007" class="small">Local shard</text>
+  <rect x="1515" y="985" width="28" height="28" rx="4" fill="url(#padding)" stroke="#d97706" stroke-width="2"/>
+  <text x="1557" y="1007" class="small">Padding</text>
+</svg>

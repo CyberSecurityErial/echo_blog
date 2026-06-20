@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1100" viewBox="0 0 1800 1100" role="img" aria-labelledby="title desc">
+  <title id="title">FSDP forward and backward hook lifecycle</title>
+  <desc id="desc">Forward pre-hook unshards parameters with all-gather, forward post-hook reshards parameters, backward pre-hook unshards again, and backward post-hook reduce-scatters gradients and reshards parameters.</desc>
+  <defs>
+    <style>
+      .heading { font: 700 42px Arial, sans-serif; fill: #111827; text-anchor: middle; }
+      .phase { font: 700 27px Arial, sans-serif; fill: #a34f18; }
+      .node { font: 600 24px Arial, sans-serif; fill: #fff; text-anchor: middle; }
+      .node-small { font: 500 22px Arial, sans-serif; fill: #fff; text-anchor: middle; }
+      .comm { font: 600 25px Arial, sans-serif; fill: #fff; text-anchor: middle; }
+      .compute { font: 600 25px Arial, sans-serif; fill: #fff; text-anchor: middle; }
+      .hook-label { font: 500 22px Arial, sans-serif; fill: #263238; text-anchor: middle; }
+      .state { font: 600 18px Arial, sans-serif; fill: #475569; text-anchor: middle; }
+      .flow { fill: none; stroke: #4777b8; stroke-width: 4; marker-end: url(#arrow); }
+      .register { fill: none; stroke: #4777b8; stroke-width: 3; marker-end: url(#arrow); }
+    </style>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0 0 L12 6 L0 12 Z" fill="#4777b8"/>
+    </marker>
+  </defs>
+
+  <rect width="1800" height="1100" fill="#fff"/>
+
+  <text x="410" y="65" class="heading">Forward</text>
+  <text x="1375" y="65" class="heading">Backward</text>
+
+  <!-- Forward and backward boundaries -->
+  <rect x="30" y="100" width="760" height="940" rx="8" fill="none" stroke="#527b3d" stroke-width="4" stroke-dasharray="22 14"/>
+  <rect x="1010" y="100" width="760" height="940" rx="8" fill="none" stroke="#527b3d" stroke-width="4" stroke-dasharray="22 14"/>
+
+  <!-- Forward pre-hook group -->
+  <text x="75" y="150" class="phase">_pre_forward</text>
+  <rect x="58" y="175" width="705" height="295" rx="6" fill="none" stroke="#d47c35" stroke-width="4" stroke-dasharray="18 12"/>
+
+  <rect x="90" y="215" width="405" height="105" fill="#4776bf"/>
+  <text x="292" y="257" class="node">pre_forward_unshard</text>
+  <text x="292" y="290" class="node-small">(Sharded → Flat)</text>
+
+  <rect x="515" y="215" width="205" height="105" fill="#70ad47"/>
+  <text x="617" y="278" class="comm">All-Gather</text>
+
+  <rect x="170" y="355" width="430" height="85" fill="#4776bf"/>
+  <text x="385" y="390" class="node">register_post_backward</text>
+  <text x="385" y="420" class="node">_hook</text>
+
+  <!-- Forward compute -->
+  <rect x="170" y="515" width="430" height="105" fill="#c99700"/>
+  <text x="385" y="558" class="compute">output = module(input)</text>
+  <text x="385" y="590" class="node-small">(Parameters: Flat)</text>
+
+  <!-- Forward post-hook group -->
+  <text x="75" y="675" class="phase">_post_forward</text>
+  <rect x="58" y="700" width="705" height="300" rx="6" fill="none" stroke="#d47c35" stroke-width="4" stroke-dasharray="18 12"/>
+
+  <rect x="170" y="735" width="430" height="105" fill="#4776bf"/>
+  <text x="385" y="778" class="node">post_forward_reshard</text>
+  <text x="385" y="810" class="node-small">(Flat → Sharded)</text>
+
+  <rect x="170" y="875" width="430" height="85" fill="#4776bf"/>
+  <text x="385" y="910" class="node">register_pre_backward</text>
+  <text x="385" y="940" class="node">_hook</text>
+
+  <!-- Forward execution arrows -->
+  <path class="flow" d="M385 440 V500"/>
+  <path class="flow" d="M385 620 V685"/>
+  <path class="flow" d="M385 840 V862"/>
+
+  <!-- Backward nodes -->
+  <rect x="1065" y="285" width="445" height="115" fill="#4776bf"/>
+  <text x="1287" y="330" class="node">post_backward_hook</text>
+  <text x="1287" y="364" class="node-small">(Flat → Sharded)</text>
+
+  <rect x="1535" y="285" width="190" height="115" fill="#70ad47"/>
+  <text x="1630" y="330" class="comm">Reduce-</text>
+  <text x="1630" y="362" class="comm">Scatter</text>
+
+  <rect x="1175" y="530" width="430" height="105" fill="#c99700"/>
+  <text x="1390" y="573" class="compute">loss.backward()</text>
+  <text x="1390" y="605" class="node-small">(Parameters: Flat)</text>
+
+  <rect x="1065" y="800" width="445" height="115" fill="#4776bf"/>
+  <text x="1287" y="845" class="node">pre_backward_hook</text>
+  <text x="1287" y="879" class="node-small">(Sharded → Flat)</text>
+
+  <rect x="1535" y="800" width="190" height="115" fill="#70ad47"/>
+  <text x="1630" y="866" class="comm">All-Gather</text>
+
+  <!-- Backward execution arrows: bottom to top -->
+  <path class="flow" d="M1287 800 V675 H1390 V648"/>
+  <path class="flow" d="M1390 530 V440 H1287 V413"/>
+
+  <!-- Hook registration arrows -->
+  <path class="register" d="M600 397 H930 Q970 397 970 342 H1050"/>
+  <rect x="775" y="354" width="215" height="42" rx="6" fill="#fff"/>
+  <text x="882" y="383" class="hook-label">Register Hook</text>
+
+  <path class="register" d="M600 917 H930 Q970 917 970 857 H1050"/>
+  <rect x="775" y="872" width="215" height="42" rx="6" fill="#fff"/>
+  <text x="882" y="901" class="hook-label">Register Hook</text>
+
+  <!-- Small state hints -->
+  <text x="410" y="1068" class="state">Forward: unshard → compute → reshard</text>
+  <text x="1375" y="1068" class="state">Backward: unshard → compute → reduce-scatter + reshard</text>
+</svg>
