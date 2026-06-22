@@ -2,6 +2,33 @@ body {
     font-family: Consolas, "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif;
 }
 
+.site-zoom-indicator {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 9999;
+    min-width: 72px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--entry);
+    color: var(--primary);
+    box-shadow: 0 6px 20px rgb(0 0 0 / 14%);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 140ms ease, transform 140ms ease;
+}
+
+.site-zoom-indicator.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
 .post-type-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
