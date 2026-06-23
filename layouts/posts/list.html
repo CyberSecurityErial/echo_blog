@@ -10,10 +10,11 @@
 {{- $sections := slice "LLM Theory" "LLM System" "杂谈" "工程踩坑" }}
 
 <div class="post-type-grid">
-  {{- range $section := $sections }}
+  {{- range $index, $section := $sections }}
   {{- $sectionPages := where $pages "Params.categories" "intersect" (slice $section) }}
   {{- $href := printf "categories/%s/" ($section | urlize) | absURL }}
   <article class="post-entry post-type-entry">
+    <div class="post-type-kicker">SECTOR {{ printf "%02d" (add $index 1) }}</div>
     <header class="entry-header">
       <h2>{{ $section }}</h2>
     </header>

@@ -26,8 +26,11 @@ markup:
 
 params:
   env: production
-  defaultTheme: auto
+  defaultTheme: dark
   disableSpecial1stPost: true
+  assets:
+    theme_color: "#05070a"
+    msapplication_TileColor: "#05070a"
   ShowReadingTime: true
   ShowCodeCopyButtons: true
   ShowToc: true

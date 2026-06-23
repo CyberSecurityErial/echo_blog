@@ -17,6 +17,11 @@
   <aside class="home-profile-sidebar">
     <img class="home-profile-avatar" src="{{ .avatar | relURL }}" alt="Echo avatar">
     <p class="home-profile-bio">{{ .bio }}</p>
+    <div class="home-profile-status" aria-hidden="true">
+      <span>ONLINE</span>
+      <span>AI SYSTEM</span>
+      <span>CRYPTO</span>
+    </div>
     {{- if site.Params.socialIcons }}
     <div class="home-profile-links">
       {{ partial "social_icons.html" (dict "align" "") }}
