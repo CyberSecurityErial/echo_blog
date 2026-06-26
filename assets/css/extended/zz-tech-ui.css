@@ -536,6 +536,9 @@ button,
 }
 
 .entry-link {
+    position: absolute;
+    inset: 0;
+    display: block;
     z-index: 2;
     border-radius: var(--radius);
 }
