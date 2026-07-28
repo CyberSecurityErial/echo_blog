@@ -10,7 +10,7 @@ weight: 1
 math: false
 ---
 
-> 这篇笔记把 SGLang 共享专家融合的计算语义、权重布局和执行路径压缩成五张结构图。图中的实现判断以 2026-07-28 的 SGLang `main` 分支为准；正文只补充图中容易误读的部分。
+> 这篇笔记把 SGLang 共享专家融合的计算语义、权重布局和执行路径压缩成六张结构图。图中的实现判断以 2026-07-29 的 SGLang `main` 分支为准；正文只补充图中容易误读的部分。
 
 ## 从双路径到一次 MoE GEMM
 
@@ -42,6 +42,12 @@ Fusion 改的是 Kernel 与 Expert Layout；Waterfill 把已经融合的 Shared 
 
 早期实现往往在 Fusion 与 SBO / TBO 之间二选一，因为融合后不再有一段独立 Shared Expert GEMM 可供调度。当前实现已经出现面向 EP Waterfill 和 SBO 内融合的进一步路径，但能否组合仍取决于 Backend、版本与具体执行路径，不能只根据某一个开关推断。
 
+## SBO 与 TBO：同批并发 vs 双微批流水
+
+![SGLang SBO 与 TBO 的执行时序对比](/images/llm-system-sglang-shared-expert-fusion/06-sbo-vs-tbo.png)
+
+SBO 不拆分当前 Forward Batch，而是在同一 Batch 内通过 Dispatcher Hook、Stream / Event 与 SM 划分，让 Shared Expert 或 Down GEMM 与 Dispatch / Combine 通信局部并发。TBO 则在 Model Runner 内把一个 Forward Batch 切成两个 Child Micro-Batch，再由两个 Stage Executor 围绕 Yield Point 交替推进，用一边的 Attention / MoE 计算覆盖另一边的 Dispatch / Combine 通信。具体重叠窗口仍会随 Prefill / Decode、Backend 与硬件策略变化。
+
 ## Checkpoint 与量化格式
 
 ![SGLang 共享专家融合的 Checkpoint 与量化格式约束](/images/llm-system-sglang-shared-expert-fusion/05-checkpoint-remap-contract.png)
@@ -56,5 +62,7 @@ Quark MXFP4 是明确的兼容示例：Routed Expert 与 Shared Expert 使用一
 - [SGLang `deepseek_weight_loader.py`：Shared Expert 权重重映射](https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/models/deepseek_common/deepseek_weight_loader.py)
 - [SGLang Server Arguments：`--enforce-shared-experts-fusion`](https://github.com/sgl-project/sglang/blob/main/docs_new/docs/advanced_features/server_arguments.mdx)
 - [SGLang Expert Parallelism：SBO 与 EP 执行路径](https://github.com/sgl-project/sglang/blob/main/docs/advanced_features/expert_parallelism.md)
+- [SGLang `single_batch_overlap.py`：SBO 重叠参数](https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/batch_overlap/single_batch_overlap.py)
+- [SGLang `two_batch_overlap.py`：TBO 拆分与交错执行](https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/batch_overlap/two_batch_overlap.py)
 - [初始 Shared Expert Fusion 实现 PR #4918](https://github.com/sgl-project/sglang/pull/4918)
 - [GLM Shared Expert Fusion 适配 PR #13873](https://github.com/sgl-project/sglang/pull/13873)
