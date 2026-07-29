@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-label="low precision bit layout and scale operations">
+  <style>
+    .bg{fill:#0b0f14}
+    .row{fill:#101821;stroke:#263241;stroke-width:1}
+    .name{fill:#e8edf4;font:700 23px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .bits{fill:#aeb8c5;font:600 15px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .ct{fill:#071016;font:800 18px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;text-anchor:middle;dominant-baseline:central}
+    .op{fill:#e8edf4;font:800 18px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;text-anchor:middle;dominant-baseline:central}
+    .tag{fill:#9fb0c3;font:700 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;text-anchor:middle}
+    .q{fill:#b9c6d6}.s{fill:#ffcf66}.e{fill:#73d2de}.m{fill:#f49ac2}.x{fill:#a7e3a1}
+    .opbox{fill:#172230;stroke:#33465c;stroke-width:1.2}.scale{fill:#24364a;stroke:#4c6b8c;stroke-width:1.2}.out{fill:#183323;stroke:#4c8b61;stroke-width:1.2}
+    .sym{fill:#d9e2ec;font:900 22px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;text-anchor:middle;dominant-baseline:central}
+    .br{fill:none;stroke:#9fb0c3;stroke-width:2}
+  </style>
+
+  <rect class="bg" width="1200" height="760"/>
+
+  <defs>
+    <g id="q8">
+      <rect class="q" x="0" y="0" width="40" height="40" rx="7"/><text class="ct" x="20" y="20">q</text>
+      <rect class="q" x="44" y="0" width="40" height="40" rx="7"/><text class="ct" x="64" y="20">q</text>
+      <rect class="q" x="88" y="0" width="40" height="40" rx="7"/><text class="ct" x="108" y="20">q</text>
+      <rect class="q" x="132" y="0" width="40" height="40" rx="7"/><text class="ct" x="152" y="20">q</text>
+      <rect class="q" x="176" y="0" width="40" height="40" rx="7"/><text class="ct" x="196" y="20">q</text>
+      <rect class="q" x="220" y="0" width="40" height="40" rx="7"/><text class="ct" x="240" y="20">q</text>
+      <rect class="q" x="264" y="0" width="40" height="40" rx="7"/><text class="ct" x="284" y="20">q</text>
+      <rect class="q" x="308" y="0" width="40" height="40" rx="7"/><text class="ct" x="328" y="20">q</text>
+    </g>
+    <g id="q4">
+      <rect class="q" x="0" y="0" width="40" height="40" rx="7"/><text class="ct" x="20" y="20">q</text>
+      <rect class="q" x="44" y="0" width="40" height="40" rx="7"/><text class="ct" x="64" y="20">q</text>
+      <rect class="q" x="88" y="0" width="40" height="40" rx="7"/><text class="ct" x="108" y="20">q</text>
+      <rect class="q" x="132" y="0" width="40" height="40" rx="7"/><text class="ct" x="152" y="20">q</text>
+    </g>
+    <g id="e4m3">
+      <rect class="s" x="0" y="0" width="40" height="40" rx="7"/><text class="ct" x="20" y="20">S</text>
+      <rect class="e" x="44" y="0" width="40" height="40" rx="7"/><text class="ct" x="64" y="20">E</text>
+      <rect class="e" x="88" y="0" width="40" height="40" rx="7"/><text class="ct" x="108" y="20">E</text>
+      <rect class="e" x="132" y="0" width="40" height="40" rx="7"/><text class="ct" x="152" y="20">E</text>
+      <rect class="e" x="176" y="0" width="40" height="40" rx="7"/><text class="ct" x="196" y="20">E</text>
+      <rect class="m" x="220" y="0" width="40" height="40" rx="7"/><text class="ct" x="240" y="20">M</text>
+      <rect class="m" x="264" y="0" width="40" height="40" rx="7"/><text class="ct" x="284" y="20">M</text>
+      <rect class="m" x="308" y="0" width="40" height="40" rx="7"/><text class="ct" x="328" y="20">M</text>
+    </g>
+    <g id="e5m2">
+      <rect class="s" x="0" y="0" width="40" height="40" rx="7"/><text class="ct" x="20" y="20">S</text>
+      <rect class="e" x="44" y="0" width="40" height="40" rx="7"/><text class="ct" x="64" y="20">E</text>
+      <rect class="e" x="88" y="0" width="40" height="40" rx="7"/><text class="ct" x="108" y="20">E</text>
+      <rect class="e" x="132" y="0" width="40" height="40" rx="7"/><text class="ct" x="152" y="20">E</text>
+      <rect class="e" x="176" y="0" width="40" height="40" rx="7"/><text class="ct" x="196" y="20">E</text>
+      <rect class="e" x="220" y="0" width="40" height="40" rx="7"/><text class="ct" x="240" y="20">E</text>
+      <rect class="m" x="264" y="0" width="40" height="40" rx="7"/><text class="ct" x="284" y="20">M</text>
+      <rect class="m" x="308" y="0" width="40" height="40" rx="7"/><text class="ct" x="328" y="20">M</text>
+    </g>
+    <g id="e2m1">
+      <rect class="s" x="0" y="0" width="40" height="40" rx="7"/><text class="ct" x="20" y="20">S</text>
+      <rect class="e" x="44" y="0" width="40" height="40" rx="7"/><text class="ct" x="64" y="20">E</text>
+      <rect class="e" x="88" y="0" width="40" height="40" rx="7"/><text class="ct" x="108" y="20">E</text>
+      <rect class="m" x="132" y="0" width="40" height="40" rx="7"/><text class="ct" x="152" y="20">M</text>
+    </g>
+    <g id="op-simple">
+      <rect class="opbox" x="0" y="0" width="74" height="40" rx="9"/><text class="op" x="37" y="20">v</text>
+      <text class="sym" x="98" y="20">*</text>
+      <rect class="scale" x="116" y="0" width="94" height="40" rx="9"/><text class="op" x="163" y="20">s</text>
+      <text class="sym" x="232" y="20">=</text>
+      <rect class="out" x="254" y="0" width="74" height="40" rx="9"/><text class="op" x="291" y="20">x</text>
+    </g>
+  </defs>
+
+  <g transform="translate(34 26)">
+    <rect class="row" width="1132" height="88" rx="14"/>
+    <text class="name" x="28" y="53">INT8</text>
+    <use href="#q8" x="224" y="24"/><text class="bits" x="590" y="50">8b</text>
+    <use href="#op-simple" x="744" y="24"/><text class="tag" x="907" y="77">s: FP16/FP32</text>
+  </g>
+
+  <g transform="translate(34 126)">
+    <rect class="row" width="1132" height="88" rx="14"/>
+    <text class="name" x="28" y="53">INT4</text>
+    <use href="#q4" x="224" y="24"/><text class="bits" x="414" y="50">4b</text>
+    <use href="#op-simple" x="744" y="24"/><text class="tag" x="907" y="77">s: block</text>
+  </g>
+
+  <g transform="translate(34 226)">
+    <rect class="row" width="1132" height="88" rx="14"/>
+    <text class="name" x="28" y="53">FP8E4M3</text>
+    <use href="#e4m3" x="224" y="24"/><text class="bits" x="590" y="50">1+4+3</text>
+    <use href="#op-simple" x="744" y="24"/><text class="tag" x="907" y="77">s: tensor/channel</text>
+  </g>
+
+  <g transform="translate(34 326)">
+    <rect class="row" width="1132" height="88" rx="14"/>
+    <text class="name" x="28" y="53">FP8E5M2</text>
+    <use href="#e5m2" x="224" y="24"/><text class="bits" x="590" y="50">1+5+2</text>
+    <use href="#op-simple" x="744" y="24"/><text class="tag" x="907" y="77">s: tensor/channel</text>
+  </g>
+
+  <g transform="translate(34 426)">
+    <rect class="row" width="1132" height="88" rx="14"/>
+    <text class="name" x="28" y="53">FP4E2M1</text>
+    <use href="#e2m1" x="224" y="24"/><text class="bits" x="414" y="50">1+2+1</text>
+    <rect class="opbox" x="744" y="24" width="74" height="40" rx="9"/><text class="op" x="781" y="44">v</text>
+    <text class="sym" x="842" y="44">=</text>
+    <rect class="out" x="864" y="24" width="74" height="40" rx="9"/><text class="op" x="901" y="44">x</text>
+  </g>
+
+  <g transform="translate(34 526)">
+    <rect class="row" width="1132" height="88" rx="14"/>
+    <text class="name" x="28" y="53">NVFP4</text>
+    <use href="#e2m1" x="224" y="24"/><text class="bits" x="414" y="50">1+2+1</text>
+    <path class="br" d="M690 70v-46h44v46"/><text class="tag" x="712" y="83">16</text>
+    <rect class="opbox" x="742" y="24" width="58" height="40" rx="9"/><text class="op" x="771" y="44">v</text>
+    <text class="sym" x="820" y="44">*</text>
+    <rect class="scale" x="836" y="24" width="86" height="40" rx="9"/><text class="op" x="879" y="44">s_b</text><text class="tag" x="879" y="77">E4M3</text>
+    <text class="sym" x="942" y="44">*</text>
+    <rect class="scale" x="958" y="24" width="70" height="40" rx="9"/><text class="op" x="993" y="44">S_g</text><text class="tag" x="993" y="77">FP32</text>
+    <text class="sym" x="1046" y="44">=</text>
+    <rect class="out" x="1064" y="24" width="58" height="40" rx="9"/><text class="op" x="1093" y="44">x</text>
+  </g>
+
+  <g transform="translate(34 626)">
+    <rect class="row" width="1132" height="88" rx="14"/>
+    <text class="name" x="28" y="53">MXFP4</text>
+    <use href="#e2m1" x="224" y="24"/><text class="bits" x="414" y="50">1+2+1 x32</text>
+    <path class="br" d="M724 70v-46h44v46"/><text class="tag" x="746" y="83">32</text>
+    <rect class="opbox" x="782" y="24" width="74" height="40" rx="9"/><text class="op" x="819" y="44">v</text>
+    <text class="sym" x="880" y="44">*</text>
+    <rect class="scale" x="900" y="24" width="104" height="40" rx="9"/><text class="op" x="952" y="44">s_b</text><text class="tag" x="952" y="77">E8M0</text>
+    <text class="sym" x="1028" y="44">=</text>
+    <rect class="out" x="1050" y="24" width="74" height="40" rx="9"/><text class="op" x="1087" y="44">x</text>
+  </g>
+</svg>
