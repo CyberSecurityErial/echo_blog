@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="660" viewBox="0 0 1200 660" role="img" aria-labelledby="title desc">
+  <title id="title">Persistent grid 内通信 CTA 与 GEMM CTA 的 tile 级流水</title>
+  <desc id="desc">左侧为 AllToAll 到 GEMM，通信 CTA 发布 tile epoch，GEMM CTA 获取后计算；右侧为 GEMM 到 AllToAll，GEMM epilogue 发布 epoch，通信 CTA 获取后路由 tile。</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f8fafc"/>
+      <stop offset="1" stop-color="#eef2ff"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0f172a" flood-opacity="0.10"/>
+    </filter>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#2563eb"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#059669"/>
+    </marker>
+    <style>
+      text { font-family: Inter, "Noto Sans CJK SC", "Microsoft YaHei", sans-serif; fill: #172033; }
+      .title { font-size: 28px; font-weight: 700; }
+      .subtitle { font-size: 16px; fill: #475569; }
+      .card-title { font-size: 20px; font-weight: 700; }
+      .lane { font-size: 15px; font-weight: 700; }
+      .tile { font-size: 14px; font-weight: 650; }
+      .small { font-size: 13px; fill: #64748b; }
+      .signal { font-size: 12px; font-weight: 700; fill: #7c3aed; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="660" rx="24" fill="url(#bg)"/>
+  <text x="600" y="48" text-anchor="middle" class="title">同一个 cooperative persistent grid，按 tile 接力</text>
+  <text x="600" y="76" text-anchor="middle" class="subtitle">通信 CTA 与 GEMM CTA 常驻；global-memory epoch 使用 release.sys / acquire.sys</text>
+
+  <g filter="url(#shadow)">
+    <rect x="34" y="106" width="550" height="470" rx="20" fill="#ffffff" stroke="#cbd5e1"/>
+    <rect x="616" y="106" width="550" height="470" rx="20" fill="#ffffff" stroke="#cbd5e1"/>
+  </g>
+
+  <text x="309" y="143" text-anchor="middle" class="card-title">A2A → QKV projection</text>
+  <text x="891" y="143" text-anchor="middle" class="card-title">batched PV → A2A</text>
+
+  <text x="58" y="194" class="lane" fill="#047857">通信 CTA</text>
+  <line x1="126" y1="190" x2="553" y2="190" stroke="#d1fae5" stroke-width="3"/>
+  <rect x="144" y="166" width="112" height="49" rx="10" fill="#d1fae5" stroke="#34d399"/>
+  <rect x="285" y="166" width="112" height="49" rx="10" fill="#d1fae5" stroke="#34d399"/>
+  <rect x="426" y="166" width="112" height="49" rx="10" fill="#d1fae5" stroke="#34d399"/>
+  <text x="200" y="196" text-anchor="middle" class="tile">peer tile 0</text>
+  <text x="341" y="196" text-anchor="middle" class="tile">peer tile 1</text>
+  <text x="482" y="196" text-anchor="middle" class="tile">peer tile 2</text>
+
+  <line x1="200" y1="215" x2="200" y2="291" stroke="#059669" stroke-width="2.5" marker-end="url(#arrowGreen)"/>
+  <line x1="341" y1="215" x2="341" y2="291" stroke="#059669" stroke-width="2.5" marker-end="url(#arrowGreen)"/>
+  <line x1="482" y1="215" x2="482" y2="291" stroke="#059669" stroke-width="2.5" marker-end="url(#arrowGreen)"/>
+  <text x="200" y="252" text-anchor="middle" class="signal">release 0</text>
+  <text x="341" y="252" text-anchor="middle" class="signal">release 1</text>
+  <text x="482" y="252" text-anchor="middle" class="signal">release 2</text>
+
+  <rect x="125" y="292" width="428" height="44" rx="12" fill="#f3e8ff" stroke="#c084fc" stroke-dasharray="5 4"/>
+  <text x="339" y="319" text-anchor="middle" class="signal">ready epoch：[M tile, peer / K group]</text>
+
+  <text x="58" y="404" class="lane" fill="#1d4ed8">GEMM CTA</text>
+  <line x1="126" y1="400" x2="553" y2="400" stroke="#dbeafe" stroke-width="3"/>
+  <path d="M200 336 L230 374" fill="none" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrowBlue)"/>
+  <path d="M341 336 L371 374" fill="none" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrowBlue)"/>
+  <path d="M482 336 L512 374" fill="none" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrowBlue)"/>
+  <rect x="174" y="375" width="112" height="54" rx="10" fill="#dbeafe" stroke="#60a5fa"/>
+  <rect x="315" y="375" width="112" height="54" rx="10" fill="#dbeafe" stroke="#60a5fa"/>
+  <rect x="456" y="375" width="112" height="54" rx="10" fill="#dbeafe" stroke="#60a5fa"/>
+  <text x="230" y="398" text-anchor="middle" class="small">acquire 0</text>
+  <text x="230" y="417" text-anchor="middle" class="tile">GEMM 0</text>
+  <text x="371" y="398" text-anchor="middle" class="small">acquire 1</text>
+  <text x="371" y="417" text-anchor="middle" class="tile">GEMM 1</text>
+  <text x="512" y="398" text-anchor="middle" class="small">acquire 2</text>
+  <text x="512" y="417" text-anchor="middle" class="tile">GEMM 2</text>
+  <text x="309" y="474" text-anchor="middle" class="subtitle">tile 到齐就启动，不等整次 A2A 完成</text>
+
+  <text x="640" y="194" class="lane" fill="#1d4ed8">GEMM CTA</text>
+  <line x1="708" y1="190" x2="1135" y2="190" stroke="#dbeafe" stroke-width="3"/>
+  <rect x="726" y="166" width="112" height="49" rx="10" fill="#dbeafe" stroke="#60a5fa"/>
+  <rect x="867" y="166" width="112" height="49" rx="10" fill="#dbeafe" stroke="#60a5fa"/>
+  <rect x="1008" y="166" width="112" height="49" rx="10" fill="#dbeafe" stroke="#60a5fa"/>
+  <text x="782" y="196" text-anchor="middle" class="tile">D tile 0</text>
+  <text x="923" y="196" text-anchor="middle" class="tile">D tile 1</text>
+  <text x="1064" y="196" text-anchor="middle" class="tile">D tile 2</text>
+
+  <line x1="782" y1="215" x2="782" y2="291" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrowBlue)"/>
+  <line x1="923" y1="215" x2="923" y2="291" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrowBlue)"/>
+  <line x1="1064" y1="215" x2="1064" y2="291" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrowBlue)"/>
+  <text x="782" y="252" text-anchor="middle" class="signal">TMA store + release</text>
+  <text x="923" y="252" text-anchor="middle" class="signal">TMA store + release</text>
+  <text x="1064" y="252" text-anchor="middle" class="signal">TMA store + release</text>
+
+  <rect x="707" y="292" width="428" height="44" rx="12" fill="#f3e8ff" stroke="#c084fc" stroke-dasharray="5 4"/>
+  <text x="921" y="319" text-anchor="middle" class="signal">ready epoch：[batch, M tile, N tile]</text>
+
+  <text x="640" y="404" class="lane" fill="#047857">通信 CTA</text>
+  <line x1="708" y1="400" x2="1135" y2="400" stroke="#d1fae5" stroke-width="3"/>
+  <path d="M782 336 L812 374" fill="none" stroke="#059669" stroke-width="2.5" marker-end="url(#arrowGreen)"/>
+  <path d="M923 336 L953 374" fill="none" stroke="#059669" stroke-width="2.5" marker-end="url(#arrowGreen)"/>
+  <path d="M1064 336 L1094 374" fill="none" stroke="#059669" stroke-width="2.5" marker-end="url(#arrowGreen)"/>
+  <rect x="756" y="375" width="112" height="54" rx="10" fill="#d1fae5" stroke="#34d399"/>
+  <rect x="897" y="375" width="112" height="54" rx="10" fill="#d1fae5" stroke="#34d399"/>
+  <rect x="1038" y="375" width="112" height="54" rx="10" fill="#d1fae5" stroke="#34d399"/>
+  <text x="812" y="398" text-anchor="middle" class="small">acquire 0</text>
+  <text x="812" y="417" text-anchor="middle" class="tile">route 0</text>
+  <text x="953" y="398" text-anchor="middle" class="small">acquire 1</text>
+  <text x="953" y="417" text-anchor="middle" class="tile">route 1</text>
+  <text x="1094" y="398" text-anchor="middle" class="small">acquire 2</text>
+  <text x="1094" y="417" text-anchor="middle" class="tile">route 2</text>
+  <text x="891" y="474" text-anchor="middle" class="subtitle">直接写对端最终 Ulysses / GQA 布局</text>
+
+  <rect x="80" y="518" width="470" height="36" rx="18" fill="#ecfdf5"/>
+  <text x="315" y="541" text-anchor="middle" class="small">通信生产数据，GEMM 在 peer/K 边界消费</text>
+  <rect x="662" y="518" width="470" height="36" rx="18" fill="#eff6ff"/>
+  <text x="897" y="541" text-anchor="middle" class="small">GEMM epilogue 发布，通信按 tile 发送</text>
+
+  <rect x="148" y="603" width="904" height="36" rx="18" fill="#172033"/>
+  <text x="600" y="627" text-anchor="middle" font-size="14" font-weight="650" fill="#ffffff">ready flag 只存 epoch · shared memory 留给 MMA mainloop · 通信 CTA 数量按 shape 扫描</text>
+</svg>
