@@ -36,6 +36,7 @@
     {{- $mainSections := site.Params.mainSections | default (slice "posts") }}
     {{- $pages := where site.RegularPages "Type" "in" $mainSections }}
     {{- $pages = where $pages "Params.hiddenInHomeList" "!=" "true" }}
+    {{- $pages = $pages.ByDate.Reverse }}
     {{- range first 8 $pages }}
     <article class="post-entry home-post-entry">
       <header class="entry-header">
