@@ -1,0 +1,368 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="2874" viewBox="0 0 2400 2874" role="img" aria-labelledby="title desc">
+  <title id="title">LMCache 三级存储协议：分层状态机</title>
+  <desc id="desc">以GPU、CPU本地缓存和外部存储为主体，展示各层的副本状态及STORE、后台STORE、PREFETCH、RETRIEVE四条跨层事务。实线表示数据事务或本地状态转移，虚线表示完成控制或回收。同一逻辑数据可同时存在多个副本。底部以六个实际场景说明触发条件、路径和副本去向，并区分默认eager与可选lazy offload。</desc>
+  <defs>
+    <marker id="arrow-slate" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M1 1 L11 6 L1 11 Z" fill="#64748b"/></marker>
+    <marker id="arrow-blue" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto"><path d="M1 1 L11 6 L1 11 Z" fill="#2563eb"/></marker>
+    <marker id="arrow-amber" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto"><path d="M1 1 L11 6 L1 11 Z" fill="#b77910"/></marker>
+    <marker id="arrow-green" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto"><path d="M1 1 L11 6 L1 11 Z" fill="#09836b"/></marker>
+    <marker id="arrow-purple" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto"><path d="M1 1 L11 6 L1 11 Z" fill="#7950bb"/></marker>
+    <marker id="arrow-red" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto"><path d="M1 1 L11 6 L1 11 Z" fill="#b65a65"/></marker>
+    <style>
+      text { font-family: "Noto Sans CJK SC", "WenQuanYi Zen Hei", sans-serif; fill:#203047; }
+      .heading { font-size:40px; font-weight:700; }
+      .subtitle { font-size:22px; fill:#53637a; }
+      .lane-title { font-size:28px; font-weight:700; }
+      .lane-sub { font-size:18px; fill:#66768a; }
+      .node-title { font-size:24px; font-weight:700; }
+      .node-detail { font-size:19px; fill:#506075; }
+      .edge-title { font-size:21px; font-weight:700; }
+      .edge-detail { font-size:18px; fill:#506075; }
+      .small { font-size:17px; fill:#64748b; }
+      .note-title { font-size:21px; font-weight:700; }
+      .note { font-size:18px; fill:#506075; }
+      .scenario-title { font-size:25px; font-weight:700; }
+      .scenario-body { font-size:20px; fill:#42546d; }
+      .scenario-path { font-size:20px; font-weight:700; }
+      .scenario-badge { font-size:20px; font-weight:700; }
+      .route { fill:none; stroke-linecap:round; stroke-linejoin:round; }
+      .underlay { fill:none; stroke:#ffffff; stroke-width:11; stroke-linecap:round; stroke-linejoin:round; }
+      .control { stroke-dasharray:9 7; }
+      .label-bg { fill:#ffffff; fill-opacity:0.97; rx:9; }
+    </style>
+  </defs>
+
+  <!-- Page and three independent storage domains; these are not time lanes. -->
+  <rect width="2400" height="2874" fill="#ffffff"/>
+  <rect x="40" y="40" width="8" height="87" rx="4" fill="#2563eb"/>
+  <text x="70" y="80" class="heading">LMCache 三级存储协议 · 分层状态机</text>
+  <text x="70" y="122" class="subtitle">同一 ObjectKey 的多个副本：预留空间 → 搬运数据 → 完成通知 → 发布 / 释放</text>
+  <g font-size="19" font-weight="700">
+    <rect x="70" y="148" width="380" height="34" rx="17" fill="#eaf1ff"/><text x="89" y="172" fill="#2563eb">① GPU → CPU：创建 CPU 副本</text>
+    <rect x="475" y="148" width="400" height="34" rx="17" fill="#fff5df"/><text x="494" y="172" fill="#b77910">② CPU → 外部：后台复制</text>
+    <rect x="900" y="148" width="430" height="34" rx="17" fill="#e7f6ef"/><text x="919" y="172" fill="#09836b">③ 外部 → CPU：预取并取得读锁</text>
+    <rect x="1355" y="148" width="400" height="34" rx="17" fill="#f1ebfc"/><text x="1374" y="172" fill="#7950bb">④ CPU → GPU：恢复引擎页面</text>
+  </g>
+
+  <g id="storage-domains">
+    <rect x="40" y="205" width="610" height="1315" rx="18" fill="#f4f8ff" stroke="#cbdaf0" stroke-width="2"/>
+    <rect x="690" y="205" width="850" height="1315" rx="18" fill="#f7f9fc" stroke="#cbd5e1" stroke-width="2"/>
+    <rect x="1580" y="205" width="780" height="1315" rx="18" fill="#f7faf8" stroke="#cfddd5" stroke-width="2"/>
+    <text x="72" y="255" class="lane-title">GPU · 引擎 KV 缓存</text>
+    <text x="72" y="287" class="lane-sub">由引擎管理；仅画与存取协议有关的状态</text>
+    <text x="720" y="255" class="lane-title">CPU · 本地缓存（源码 L1）</text>
+    <text x="720" y="287" class="lane-sub">L1Manager：驻留表 / staging 表 + 锁 + temporary 标记</text>
+    <text x="1612" y="255" class="lane-title">外部存储 · SSD / 远端存储</text>
+    <text x="1612" y="287" class="lane-sub">源码 L2；以下为协议状态，各 adapter 实现自己的内部状态</text>
+  </g>
+
+  <!-- Local GPU state transitions. -->
+  <g id="gpu-transitions">
+    <path class="route" d="M300 445 V590" stroke="#64748b" stroke-width="2.8" marker-end="url(#arrow-slate)"/>
+    <text x="320" y="514" class="edge-detail">引擎计算产生 KV</text>
+    <path class="route control" d="M480 685 H555 V388 H480" stroke="#b65a65" stroke-width="2.5" marker-end="url(#arrow-red)"/>
+    <rect x="487" y="459" width="146" height="88" class="label-bg"/>
+    <text x="502" y="484" class="edge-detail">引擎回收页面</text>
+    <text x="502" y="511" class="small">不自动下刷</text>
+    <path class="route" d="M300 1090 V720" stroke="#7950bb" stroke-width="3" marker-end="url(#arrow-purple)"/>
+    <rect x="121" y="835" width="359" height="85" class="label-bg"/>
+    <text x="140" y="866" class="edge-title" fill="#7950bb">④ 设备拷贝完成</text>
+    <text x="140" y="895" class="edge-detail">完成事件使 GPU 恢复结果可被确认</text>
+  </g>
+
+  <!-- CPU allocation, admission, locking and reclaim. -->
+  <g id="cpu-transitions">
+    <path class="route" d="M1100 445 V590" stroke="#64748b" stroke-width="2.8" marker-end="url(#arrow-slate)"/>
+    <text x="1118" y="509" class="edge-title">reserve_write</text>
+    <text x="1118" y="538" class="edge-detail">分配空间 + 建立写预留</text>
+    <path class="route" d="M1100 720 V840" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow-blue)"/>
+    <text x="1118" y="765" class="edge-title" fill="#2563eb">① copy 完成后回调</text>
+    <text x="1118" y="796" class="edge-detail">finish_write：发布为可读</text>
+    <path class="route" d="M1100 970 V1090" stroke="#64748b" stroke-width="2.8" marker-end="url(#arrow-slate)"/>
+    <text x="1120" y="1015" class="edge-title">reserve_read</text>
+    <text x="1120" y="1045" class="edge-detail">② 后台写外部 / ④ 恢复 GPU</text>
+    <path class="route" d="M1100 1350 V1230" stroke="#09836b" stroke-width="3" marker-end="url(#arrow-green)"/>
+    <rect x="881" y="1257" width="438" height="69" class="label-bg"/>
+    <text x="900" y="1282" class="edge-title" fill="#09836b">③ load 成功：原子发布 + 读锁</text>
+    <text x="900" y="1310" class="edge-detail">finish_write_and_reserve_read</text>
+    <path class="route control" d="M870 1188 H785 V389 H870" stroke="#b65a65" stroke-width="2.5" marker-end="url(#arrow-red)"/>
+    <rect x="707" y="469" width="336" height="80" class="label-bg"/>
+    <text x="725" y="497" class="edge-title" fill="#b65a65">finish_read：最后读者结束</text>
+    <text x="725" y="527" class="edge-detail">temporary → 删除 CPU 副本</text>
+    <path class="route control" d="M1330 925 H1450 V389 H1330" stroke="#b65a65" stroke-width="2.5" marker-end="url(#arrow-red)"/>
+    <rect x="1345" y="466" width="207" height="104" class="label-bg"/>
+    <text x="1360" y="493" class="edge-title" fill="#b65a65">CPU 压力淘汰</text>
+    <text x="1360" y="522" class="small">检查锁后 DISCARD</text>
+    <text x="1360" y="549" class="small">不要求外部已有副本</text>
+  </g>
+
+  <!-- Local backend protocol states. -->
+  <g id="external-transitions">
+    <path class="route" d="M2030 445 V590" stroke="#64748b" stroke-width="2.8" marker-end="url(#arrow-slate)"/>
+    <text x="2050" y="515" class="edge-detail">收到写任务</text>
+    <path class="route" d="M2030 720 V870" stroke="#b77910" stroke-width="3" marker-end="url(#arrow-amber)"/>
+    <text x="2050" y="780" class="edge-title" fill="#b77910">② store 结果成功</text>
+    <text x="2050" y="810" class="edge-detail">后端发布可用副本</text>
+    <path class="route" d="M1915 1000 V1350" stroke="#09836b" stroke-width="3" marker-end="url(#arrow-green)"/>
+    <rect x="1759" y="1078" width="444" height="79" class="label-bg"/>
+    <text x="1778" y="1108" class="edge-title" fill="#09836b">③ lookup_and_lock 命中</text>
+    <text x="1778" y="1138" class="edge-detail">查找并保护源副本，防止读取前被淘汰</text>
+    <path class="route control" d="M2160 1350 V1000" stroke="#09836b" stroke-width="2.6" marker-end="url(#arrow-green)"/>
+    <rect x="1956" y="1190" width="374" height="107" class="label-bg"/>
+    <text x="1973" y="1218" class="edge-title" fill="#09836b">③ submit_unlock</text>
+    <text x="1973" y="1247" class="edge-detail">CPU 已发布，或该外部副本未被选用</text>
+    <text x="1973" y="1275" class="small">读失败 / 取消也需要释放保护</text>
+    <path class="route control" d="M2230 933 H2303 V389 H2230" stroke="#b65a65" stroke-width="2.5" marker-end="url(#arrow-red)"/>
+    <rect x="2241" y="479" width="106" height="84" class="label-bg"/>
+    <text x="2253" y="508" class="edge-detail">后端淘汰</text>
+    <text x="2253" y="538" class="small">受锁约束</text>
+  </g>
+
+  <!-- Four cross-domain data transactions, with explicit start/end states. -->
+  <g id="transaction-1-gpu-to-cpu">
+    <path class="underlay" d="M480 650 H870"/>
+    <path class="route" d="M480 650 H870" stroke="#2563eb" stroke-width="4" marker-end="url(#arrow-blue)"/>
+    <rect x="505" y="563" width="337" height="72" class="label-bg"/>
+    <text x="521" y="591" class="edge-title" fill="#2563eb">① STORE · GPU → CPU</text>
+    <text x="521" y="619" class="edge-detail">等待 producer event；提交 D2H</text>
+  </g>
+  <g id="transaction-2-cpu-to-external">
+    <path class="underlay" d="M1330 1140 H1652 V650 H1830"/>
+    <path class="route" d="M1330 1140 H1652 V650 H1830" stroke="#b77910" stroke-width="4" marker-end="url(#arrow-amber)"/>
+    <rect x="1360" y="1038" width="407" height="78" class="label-bg"/>
+    <text x="1378" y="1068" class="edge-title" fill="#b77910">② 后台 STORE · CPU → 外部</text>
+    <text x="1378" y="1097" class="edge-detail">CPU 源持读锁 → submit_store_task</text>
+    <rect x="1668" y="688" width="140" height="93" class="label-bg"/>
+    <text x="1682" y="716" class="small">发布后监听器</text>
+    <text x="1682" y="743" class="small">触发后台复制</text>
+    <text x="1682" y="768" class="small">不是淘汰下刷</text>
+  </g>
+  <g id="transaction-3-external-to-cpu">
+    <path class="underlay" d="M1830 1410 H1330"/>
+    <path class="route" d="M1830 1410 H1330" stroke="#09836b" stroke-width="4" marker-end="url(#arrow-green)"/>
+    <rect x="1353" y="1320" width="454" height="73" class="label-bg"/>
+    <text x="1372" y="1348" class="edge-title" fill="#09836b">③ PREFETCH · 外部 → CPU</text>
+    <text x="1372" y="1378" class="edge-detail">reserve_write → submit_load_task</text>
+  </g>
+  <g id="transaction-4-cpu-to-gpu">
+    <path class="underlay" d="M870 1140 H480"/>
+    <path class="route" d="M870 1140 H480" stroke="#7950bb" stroke-width="4" marker-end="url(#arrow-purple)"/>
+  </g>
+
+  <!-- Completion paths are separate from data paths and GPU event signals. -->
+  <g id="store-completion-control">
+    <path class="underlay" d="M1830 930 H1530 V900 H1330"/>
+    <path class="route control" d="M1830 930 H1530 V900 H1330" stroke="#b77910" stroke-width="2.8" marker-end="url(#arrow-amber)"/>
+    <rect x="1347" y="814" width="451" height="77" class="label-bg"/>
+    <text x="1364" y="844" class="edge-title" fill="#b77910">② 后端结果通知 → finish_read</text>
+    <text x="1364" y="873" class="edge-detail">默认保留；最后读锁释放后回到空闲</text>
+  </g>
+  <g id="retrieve-completion-control">
+    <path class="underlay" d="M480 1195 H611 V900 H870"/>
+    <path class="route control" d="M480 1195 H611 V900 H870" stroke="#7950bb" stroke-width="2.8" marker-end="url(#arrow-purple)"/>
+    <rect x="497" y="936" width="359" height="84" class="label-bg"/>
+    <text x="514" y="965" class="edge-title" fill="#7950bb">④ H2D 完成后回调 finish_read</text>
+    <text x="514" y="994" class="edge-detail">保留型回空闲；临时型走删除回边</text>
+  </g>
+  <g id="transaction-4-label">
+    <rect x="503" y="1040" width="340" height="77" class="label-bg"/>
+    <text x="520" y="1070" class="edge-title" fill="#7950bb">④ RETRIEVE · CPU → GPU</text>
+    <text x="520" y="1099" class="edge-detail">引擎提供目标页面；提交 H2D</text>
+  </g>
+
+  <!-- States: actual payload state first, management state second. -->
+  <g id="gpu-absent">
+    <rect x="120" y="330" width="360" height="115" rx="14" fill="#ffffff" stroke="#b7c7dc" stroke-width="2"/>
+    <text x="145" y="370" class="node-title">G0 · 无有效 GPU 副本</text>
+    <text x="145" y="402" class="node-detail">尚未计算 / 页面已被引擎回收</text>
+  </g>
+  <g id="gpu-ready">
+    <rect x="120" y="590" width="360" height="130" rx="14" fill="#eaf2ff" stroke="#6696de" stroke-width="2.5"/>
+    <text x="145" y="630" class="node-title">G1 · GPU 数据有效</text>
+    <text x="145" y="662" class="node-detail">引擎可读取；可以成为 STORE 源</text>
+    <text x="145" y="691" class="node-detail">存入 CPU 不会自动删除此副本</text>
+  </g>
+  <g id="gpu-receiving">
+    <rect x="120" y="1090" width="360" height="130" rx="14" fill="#f1ebfc" stroke="#a589ce" stroke-width="2.5"/>
+    <text x="145" y="1130" class="node-title">G2 · GPU 目标正在填充</text>
+    <text x="145" y="1162" class="node-detail">目标页已分配；H2D 在途</text>
+    <text x="145" y="1191" class="node-detail">提交成功 ≠ 引擎已可使用</text>
+  </g>
+  <g id="gpu-protocol-note">
+    <rect x="100" y="1293" width="501" height="175" rx="12" fill="#ffffff" stroke="#d9e3f2"/>
+    <text x="122" y="1328" class="note-title">设备事件 ≠ CPU 元数据发布</text>
+    <text x="122" y="1361" class="note">event 表示设备 copy 完成。</text>
+    <text x="122" y="1391" class="note">CPU 的发布 / 解锁由随后完成回调处理，</text>
+    <text x="122" y="1421" class="note">不是由 GPU event 本身修改驻留表。</text>
+    <text x="122" y="1451" class="small">GPU 页面回收遵循引擎与连接器的完成协议。</text>
+  </g>
+
+  <g id="cpu-absent">
+    <rect x="870" y="330" width="460" height="115" rx="14" fill="#ffffff" stroke="#aebdce" stroke-width="2"/>
+    <text x="894" y="370" class="node-title">C0 · CPU 副本不存在</text>
+    <text x="894" y="402" class="node-detail">无可用对象；空间未分配或已经回收</text>
+  </g>
+  <g id="cpu-staging-from-gpu">
+    <rect x="870" y="590" width="460" height="130" rx="14" fill="#eef4ff" stroke="#7da0d8" stroke-width="2.5"/>
+    <text x="894" y="630" class="node-title">C1 · STAGING（GPU 写入）</text>
+    <text x="894" y="662" class="node-detail">CPU 空间已分配，内容尚未承诺有效</text>
+    <text x="894" y="691" class="node-detail">_staging[key][tag] · 写锁 · 对读者不可见</text>
+  </g>
+  <g id="cpu-resident-idle">
+    <rect x="870" y="840" width="460" height="130" rx="14" fill="#edf5ef" stroke="#79a88c" stroke-width="2.5"/>
+    <text x="894" y="880" class="node-title">C2 · RESIDENT / 空闲</text>
+    <text x="894" y="912" class="node-detail">完整数据已发布，可被读取</text>
+    <text x="894" y="941" class="node-detail">_objects[key] · 无有效读锁 · 可作为淘汰候选</text>
+  </g>
+  <g id="cpu-resident-read-locked">
+    <rect x="870" y="1090" width="460" height="140" rx="14" fill="#fff5df" stroke="#c4a05c" stroke-width="2.5"/>
+    <text x="894" y="1130" class="node-title">C3 · RESIDENT / 读锁保护</text>
+    <text x="894" y="1162" class="node-detail">有效数据，被某次读取 / 搬运使用</text>
+    <text x="894" y="1191" class="node-detail">正常锁有效期内不能淘汰；可以有多个读者</text>
+    <text x="894" y="1217" class="small">temporary 决定最后读者释放后的保留行为</text>
+  </g>
+  <g id="cpu-staging-from-external">
+    <rect x="870" y="1350" width="460" height="130" rx="14" fill="#e9f6f0" stroke="#75ab96" stroke-width="2.5"/>
+    <text x="894" y="1390" class="node-title">C1′ · STAGING（外部读入）</text>
+    <text x="894" y="1422" class="node-detail">CPU 无可用副本时预留目标；load 在途</text>
+    <text x="894" y="1451" class="node-detail">_staging[key][prefetch tag] · 写锁 · 不可读</text>
+  </g>
+
+  <g id="external-absent">
+    <rect x="1830" y="330" width="400" height="115" rx="14" fill="#ffffff" stroke="#b5c8bd" stroke-width="2"/>
+    <text x="1854" y="370" class="node-title">E0 · 后端无可用副本</text>
+    <text x="1854" y="402" class="node-detail">未写入 / 已淘汰 / 查找未命中</text>
+  </g>
+  <g id="external-store-in-flight">
+    <rect x="1830" y="590" width="400" height="130" rx="14" fill="#fff5df" stroke="#c4a05c" stroke-width="2.5"/>
+    <text x="1854" y="630" class="node-title">E1 · 外部写入在途</text>
+    <text x="1854" y="662" class="node-detail">task_id 跟踪异步 store</text>
+    <text x="1854" y="691" class="node-detail">后端尚未报告这次写入成功</text>
+  </g>
+  <g id="external-available">
+    <rect x="1830" y="870" width="400" height="130" rx="14" fill="#edf5ef" stroke="#79a88c" stroke-width="2.5"/>
+    <text x="1854" y="910" class="node-title">E2 · 外部副本可用</text>
+    <text x="1854" y="942" class="node-detail">后端可查找 / 读取；可与 CPU 副本共存</text>
+    <text x="1854" y="971" class="node-detail">介质与持久性保证由具体后端决定</text>
+  </g>
+  <g id="external-read-protected">
+    <rect x="1830" y="1350" width="400" height="130" rx="14" fill="#e9f6f0" stroke="#75ab96" stroke-width="2.5"/>
+    <text x="1854" y="1390" class="node-title">E3 · 外部副本受保护</text>
+    <text x="1854" y="1422" class="node-detail">lookup_and_lock 成功；可供 load</text>
+    <text x="1854" y="1451" class="node-detail">load 结束后解锁，不删除源副本</text>
+  </g>
+
+  <!-- Diagram contract and the important non-happy-path boundaries. -->
+  <g id="legend-and-boundaries">
+    <rect x="40" y="1542" width="1310" height="170" rx="12" fill="#f6f8fb" stroke="#dde4ed"/>
+    <text x="61" y="1575" class="note-title">读图约定</text>
+    <path d="M198 1568 H265" class="route" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow-blue)"/>
+    <text x="280" y="1575" class="note">跨层数据事务</text>
+    <path d="M479 1568 H546" class="route control" stroke="#7950bb" stroke-width="2.6" marker-end="url(#arrow-purple)"/>
+    <text x="560" y="1575" class="note">完成控制</text>
+    <path d="M731 1568 H798" class="route control" stroke="#b65a65" stroke-width="2.6" marker-end="url(#arrow-red)"/>
+    <text x="812" y="1575" class="note">回收 / 删除</text>
+    <text x="61" y="1609" class="note">节点是各层局部状态，不是单个全局枚举；同一逻辑数据可以同时在三层存在。线条交叉不表示连接。</text>
+    <text x="61" y="1639" class="note">C1 与 C1′ 是同一个 staging 状态，按写入来源拆画。读锁释放只归还本次持有量，其他读者可继续占用。</text>
+    <text x="61" y="1669" class="note">范围：LMCache MP + CPU 本地缓存 + 普通服务读取。CPU 命中可省外部数据读取，不一定省外部元数据查询。</text>
+    <text x="61" y="1695" class="small">图中省略 Group / kernel、请求批处理及多写者竞争；prefetch 发布不再次触发后台 STORE。</text>
+
+    <rect x="1370" y="1542" width="990" height="170" rx="12" fill="#fff9f3" stroke="#eadccc"/>
+    <text x="1391" y="1575" class="note-title">失败与保留边界</text>
+    <text x="1391" y="1609" class="note">CPU 写失败不发布；load 失败清 staging；外部 store 失败也解锁，CPU 副本仍有效。</text>
+    <text x="1391" y="1639" class="note">默认外部新载入对象为 temporary，用完释放；后台 STORE 默认保留 CPU 副本。</text>
+    <text x="1391" y="1669" class="note">skip_l1：外部写成功后尝试删 CPU。CPU 淘汰是 DISCARD，不是 writeback。</text>
+    <text x="1391" y="1695" class="small">TTL 过期 ≠ I/O 完成；store 完成 ≠ 所有后端统一保证掉电持久性。</text>
+  </g>
+
+  <!-- Concrete triggers: connect real inference/cache events to the four routes. -->
+  <g id="trigger-scenarios">
+    <path d="M40 1740 H2360" stroke="#dbe3ed" stroke-width="2"/>
+    <text x="42" y="1786" font-size="32" font-weight="700">这些路径什么时候启动？——六个实际场景</text>
+    <text x="42" y="1821" class="subtitle">按 vLLM MP + CPU 缓存 + 已配置外部后端的普通 eager 模式举例；路径编号对应上方协议图。</text>
+    <rect x="40" y="1838" width="2320" height="86" rx="12" fill="#eef3fc" stroke="#d5dfef"/>
+    <text x="63" y="1873" font-size="22" font-weight="700">读路径由“新请求需要恢复的前缀在哪一层”决定；写路径由“连接器有可保存的新 KV”启动，不必等内存满。</text>
+    <text x="63" y="1905" class="scenario-body">① 由引擎连接器提交；② 由 CPU 发布完成通知触发；③ 由请求 lookup / prefetch 触发；④ 由引擎需要恢复 GPU 页面触发。</text>
+
+    <g id="scenario-a-new-kv">
+      <rect x="40" y="1946" width="1140" height="224" rx="14" fill="#f5f8ff" stroke="#cddbf1" stroke-width="1.5"/>
+      <text x="65" y="1984" class="scenario-title">A · 首次计算新 prompt，产生可保存的 KV</text>
+      <rect x="966" y="1960" width="190" height="37" rx="18" fill="#e1ebff"/>
+      <text x="1011" y="1986" class="scenario-badge" style="fill:#2563eb">① → ②</text>
+      <text x="65" y="2023" class="scenario-body">触发：连接器发现新增、满足完整 chunk 等保存条件的 KV，提交 STORE。</text>
+      <text x="65" y="2058" class="scenario-body">例子：chunk = 256；首次 1024-token 前缀已算完，有 4 个完整 chunk 可缓存。</text>
+      <text x="65" y="2093" class="scenario-path">路径：① GPU → CPU staging → 发布 CPU 副本 → ② 按策略后台写外部。</text>
+      <text x="65" y="2128" class="scenario-body">结果：默认保留 CPU；GPU 原副本不自动删除。不是每个新 token 都单独写出。</text>
+      <text x="65" y="2154" class="small">前提：保存功能启用且范围未受限；未配置外部后端时，流程止于①。</text>
+    </g>
+
+    <g id="scenario-b-gpu-hit">
+      <rect x="1220" y="1946" width="1140" height="224" rx="14" fill="#f7f9fc" stroke="#d4dce7" stroke-width="1.5"/>
+      <text x="1245" y="1984" class="scenario-title">B · 相同前缀仍在 GPU，可直接复用</text>
+      <rect x="2146" y="1960" width="190" height="37" rx="18" fill="#e8edf4"/>
+      <text x="2167" y="1986" class="scenario-badge">命中段无需④</text>
+      <text x="1245" y="2023" class="scenario-body">触发：新请求到来，引擎本地前缀缓存仍有可复用的 GPU 页面。</text>
+      <text x="1245" y="2058" class="scenario-body">例子：连续两轮请求复用相同的 system prompt，其 GPU 页尚未被回收。</text>
+      <text x="1245" y="2093" class="scenario-path">路径：直接复用 G1；GPU 已覆盖的这部分前缀，不必再通过④恢复。</text>
+      <text x="1245" y="2128" class="scenario-body">边界：不代表完全没有跨层 I/O；①补存、③提前预取或后台任务可独立发生。</text>
+      <text x="1245" y="2154" class="small">只讨论可复用的前缀段；新后缀的计算与写出另行判断。</text>
+    </g>
+
+    <g id="scenario-c-cpu-hit">
+      <rect x="40" y="2192" width="1140" height="224" rx="14" fill="#faf7ff" stroke="#ded3ef" stroke-width="1.5"/>
+      <text x="65" y="2230" class="scenario-title">C · GPU 已无副本，CPU 仍然命中</text>
+      <rect x="966" y="2206" width="190" height="37" rx="18" fill="#eee4fc"/>
+      <text x="998" y="2232" class="scenario-badge" style="fill:#7950bb">④ CPU → GPU</text>
+      <text x="65" y="2269" class="scenario-body">触发：引擎需要恢复的前缀，在 LMCache CPU 缓存中找到可用副本。</text>
+      <text x="65" y="2304" class="scenario-body">例子：GPU 旧前缀已被回收，但上次①保存的 CPU 副本仍在。</text>
+      <text x="65" y="2339" class="scenario-path">路径：CPU 取得读锁（C2 → C3）→ ④ H2D → GPU 可用（G2 → G1）。</text>
+      <text x="65" y="2374" class="scenario-body">结果：这部分无需③外部数据读取；保留型 CPU 副本在最后读锁释放后继续驻留。</text>
+      <text x="65" y="2400" class="small">CPU 命中可省外部数据读取，但当前实现仍可能查询外部元数据。</text>
+    </g>
+
+    <g id="scenario-d-external-hit">
+      <rect x="1220" y="2192" width="1140" height="224" rx="14" fill="#f2faf6" stroke="#cbded4" stroke-width="1.5"/>
+      <text x="1245" y="2230" class="scenario-title">D · GPU / CPU 都没有，外部仍有副本</text>
+      <rect x="2146" y="2206" width="190" height="37" rx="18" fill="#dff2e8"/>
+      <text x="2191" y="2232" class="scenario-badge" style="fill:#09836b">③ → ④</text>
+      <text x="1245" y="2269" class="scenario-body">触发：新请求需要恢复前缀，CPU 未命中，外部 lookup 找到可用副本。</text>
+      <text x="1245" y="2304" class="scenario-body">例子：长文档 KV 已写入外部，随后 GPU、CPU 副本都被淘汰；现在再次访问。</text>
+      <text x="1245" y="2339" class="scenario-path">路径：③ 保护外部源 → CPU staging → 发布并取得读锁 → ④ 恢复 GPU。</text>
+      <text x="1245" y="2374" class="scenario-body">结果：默认这份新载入的 CPU 对象为 temporary；最后读者结束后即释放。</text>
+      <text x="1245" y="2400" class="small">若使用 retain 预取策略，则保留这份 CPU 副本，以备后续请求复用。</text>
+    </g>
+
+    <g id="scenario-e-gpu-pressure">
+      <rect x="40" y="2438" width="1140" height="224" rx="14" fill="#faf8f8" stroke="#e4d4d7" stroke-width="1.5"/>
+      <text x="65" y="2476" class="scenario-title">E · 显存吃紧，引擎需要复用旧 GPU 页</text>
+      <rect x="966" y="2452" width="190" height="37" rx="18" fill="#f4e7e9"/>
+      <text x="1002" y="2478" class="scenario-badge" style="fill:#a64f5b">G1 → G0</text>
+      <text x="65" y="2515" class="scenario-body">触发：推理引擎按自己的页面管理规则，回收不再被使用的 GPU 缓存页。</text>
+      <text x="65" y="2550" class="scenario-body">例子：旧请求结束，已有 CPU / 外部副本；新请求需要腾出 GPU 空间。</text>
+      <text x="65" y="2585" class="scenario-path">路径：G1 → G0；此前通过① / ②写出的副本，可在下次按 C / D 恢复。</text>
+      <text x="65" y="2620" class="scenario-body">边界：GPU 回收本身不保证触发①；不能假定回收每一页时都会同步 offload。</text>
+      <text x="65" y="2646" class="small">若存在在途搬运，页面复用须遵守引擎与连接器的完成协议；lazy 模式见下方。</text>
+    </g>
+
+    <g id="scenario-f-cpu-pressure">
+      <rect x="1220" y="2438" width="1140" height="224" rx="14" fill="#fff9f3" stroke="#ead9c6" stroke-width="1.5"/>
+      <text x="1245" y="2476" class="scenario-title">F · CPU 缓存超过淘汰水位</text>
+      <rect x="2146" y="2452" width="190" height="37" rx="18" fill="#f8ead9"/>
+      <text x="2182" y="2478" class="scenario-badge" style="fill:#a66b22">C2 → C0</text>
+      <text x="1245" y="2515" class="scenario-body">触发：CPU 淘汰控制器检查到占用率超过配置阈值，选择无锁等可淘汰对象。</text>
+      <text x="1245" y="2550" class="scenario-body">例子：假设阈值设为 80%，当前占用 90%；选择空闲的冷对象释放空间。</text>
+      <text x="1245" y="2585" class="scenario-path">路径：C2 → C0（DISCARD）；不是此时才触发②，②由 CPU 写完成独立触发。</text>
+      <text x="1245" y="2620" class="scenario-body">结果：若外部已有副本，下次可走 D；若其他层也没有，则缓存 miss、需要重算。</text>
+      <text x="1245" y="2646" class="small">CPU 回收不以“外部一定已有副本”为统一前提，也不会自动删除外部副本。</text>
+    </g>
+
+    <g id="optional-lazy-trigger">
+      <rect x="40" y="2684" width="2320" height="150" rx="12" fill="#f3f5f9" stroke="#d9e0ea"/>
+      <text x="63" y="2720" class="scenario-title">可选 lazy offload：把“何时启动①”交给延迟写出策略</text>
+      <text x="63" y="2755" class="scenario-body">lazy_offload 默认关闭。开启并使用 EVICTION_AWARE 时，先积累待存对象；预测 GPU 块进入淘汰危险窗口，或配置的最大延迟到期，才提交①。</text>
+      <text x="63" y="2790" class="scenario-body">CPU 副本发布后仍按②后台复制。它不同于 F 的 CPU 水位淘汰；全层未命中时由引擎重算，满足保存条件后再按 A 写出。</text>
+      <text x="63" y="2817" class="small">示例为满足命中、分配与存取条件的成功主线，不承诺所有模型 / 配置都采用同一保存时机；默认不等于每步或每个 decode token 都写出。</text>
+    </g>
+  </g>
+</svg>
